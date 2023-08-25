@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package watermark;
+
+option go_package = "./watermark";
+
+service Watermark {
+    rpc Get (GetRequest) returns (GetResponse) {}
+    
+    rpc Watermark (WatermarkRequest) returns (WatermarkResponse) {}
+    
+    rpc Status (StatusRequest) returns (StatusResponse) {}
+    
+    rpc AddDocument (AddDocumentRequest) returns (AddDocumentResponse) {}
+
+    rpc ServiceStatus (ServiceStatusRequest) returns (ServiceStatusResponse) {}
+}
+
+message Document {
+    string content = 1;
+    string title = 2;
+    string author = 3;
+    string topic = 4;
+    string watermark = 5;
+}
+
+message GetRequest {
+    message Filters {
+        string key = 1;
+        string value = 2;
+    }
+    repeated Filters filters = 1;
+}
+
+message GetResponse {
+    repeated Document documents = 1;
+    string err = 2;
+}
+
+message StatusRequest {
+    string ticketID = 1;
+}
+
+message StatusResponse {
+    enum Status {
+        PENDING = 0;
+        STARTED = 1;
+        IN_PROGRESS = 2;
+        FINISHED = 3;
+        FAILED = 4;
+    }
+    Status status = 1;
+    string err = 2;
+}
+
+message WatermarkRequest {
+    string ticketID = 1;
+    string mark = 2;
+}
+
+message WatermarkResponse {
+    int64 code = 1;
+    string err = 2;
+}
+
+message AddDocumentRequest {
+    Document document = 1;
+}
+
+message AddDocumentResponse {
+    string ticketID = 1;
+    string err = 2;
+}
+
+message ServiceStatusRequest {}
+
+message ServiceStatusResponse {
+    int64 code = 1;
+    string err = 2;
+}
