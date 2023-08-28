@@ -7,43 +7,38 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"watermark-service/internal/database"
+	proto "watermark-service/api/v1/protos/watermark"
 	"watermark-service/internal/util"
-	dbsvc "watermark-service/pkg/database"
-	"watermark-service/pkg/database/endpoints"
-	"watermark-service/pkg/database/transport"
-
-	proto "watermark-service/api/v1/protos/db"
+	"watermark-service/pkg/watermark"
+	"watermark-service/pkg/watermark/endpoints"
+	"watermark-service/pkg/watermark/transport"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
 	"github.com/go-kit/log"
 	"github.com/oklog/oklog/pkg/group"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 const (
-	defaultHTTPPort = "9091"
-	defaultGRPCPort = "9092"
-)
-
-var (
-	logger   log.Logger
-	httpAddr = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
-	grpcAddr = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
+	defaultHTTPPort = "8081"
+	defaultGRPCPort = "8082"
+	defaultDBPort   = "9092"
 )
 
 func main() {
-
-	orm, err := database.Init(database.DefaultHost, database.DefaultPort, database.DefaultDBUser, database.DefaultDatabase, database.DefaultPassword)
-	if err != nil {
-		logger.Log("FATAL: failed to load db with error ", err.Error())
-	}
-
 	var (
-		service     = dbsvc.NewService(orm)
+		logger        log.Logger
+		httpAddr      = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
+		grpcAddr      = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
+		dbServiceAddr = net.JoinHostPort("localhost", util.EnvString("DB_PORT", defaultDBPort))
+	)
+
+	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	var (
+		service     = watermark.NewService(dbServiceAddr)
 		eps         = endpoints.NewEndpointSet(service)
-		httpHandler = transport.NewHttpHandler(eps)
+		httpHandler = transport.NewHTTPHandler(eps)
 		grpcServer  = transport.NewGRPCServer(eps)
 	)
 
@@ -51,7 +46,7 @@ func main() {
 	{
 		httpListener, err := net.Listen("tcp", httpAddr)
 		if err != nil {
-			logger.Log("transport", "HTTP", "during", "Listen", "error", err)
+			logger.Log("transport", "HTTP", "during", "Listen", "err", err)
 			os.Exit(1)
 		}
 		g.Add(func() error {
@@ -64,14 +59,13 @@ func main() {
 	{
 		grpcListener, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
-			logger.Log("transport", "gRPC", "during", "Listen", "error", err)
+			logger.Log("transport", "gRPC", "during", "Listen", "err", err)
 			os.Exit(1)
 		}
 		g.Add(func() error {
 			logger.Log("transport", "gRPC", "addr", grpcAddr)
 			baseServer := grpc.NewServer(grpc.UnaryInterceptor(grpckit.Interceptor))
-			reflection.Register(baseServer)
-			proto.RegisterDatabaseServer(baseServer, grpcServer)
+			proto.RegisterWatermarkServer(baseServer, grpcServer)
 			return baseServer.Serve(grpcListener)
 		}, func(error) {
 			grpcListener.Close()
@@ -93,9 +87,4 @@ func main() {
 		})
 	}
 	logger.Log("exit", g.Run())
-}
-
-func init() {
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }

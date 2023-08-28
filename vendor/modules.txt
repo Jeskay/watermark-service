@@ -1,16 +1,18 @@
-# github.com/go-kit/kit v0.12.0
+# github.com/go-kit/kit v0.13.0
 ## explicit; go 1.17
 github.com/go-kit/kit/endpoint
 github.com/go-kit/kit/transport
 github.com/go-kit/kit/transport/grpc
+github.com/go-kit/kit/transport/http
 # github.com/go-kit/log v0.2.1
 ## explicit; go 1.17
 github.com/go-kit/log
 # github.com/go-logfmt/logfmt v0.6.0
 ## explicit; go 1.17
 github.com/go-logfmt/logfmt
-# github.com/golang/protobuf v1.5.2
+# github.com/golang/protobuf v1.5.3
 ## explicit; go 1.9
+github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
@@ -22,16 +24,16 @@ github.com/jackc/pgpassfile
 # github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
-# github.com/jackc/pgx/v5 v5.3.1
+# github.com/jackc/pgx/v5 v5.4.3
 ## explicit; go 1.19
 github.com/jackc/pgx/v5
 github.com/jackc/pgx/v5/internal/anynil
 github.com/jackc/pgx/v5/internal/iobufpool
-github.com/jackc/pgx/v5/internal/nbconn
 github.com/jackc/pgx/v5/internal/pgio
 github.com/jackc/pgx/v5/internal/sanitize
 github.com/jackc/pgx/v5/internal/stmtcache
 github.com/jackc/pgx/v5/pgconn
+github.com/jackc/pgx/v5/pgconn/internal/bgreader
 github.com/jackc/pgx/v5/pgconn/internal/ctxwatch
 github.com/jackc/pgx/v5/pgproto3
 github.com/jackc/pgx/v5/pgtype
@@ -48,10 +50,10 @@ github.com/oklog/oklog/pkg/group
 # github.com/oklog/run v1.1.0
 ## explicit; go 1.13
 github.com/oklog/run
-# golang.org/x/crypto v0.8.0
+# golang.org/x/crypto v0.12.0
 ## explicit; go 1.17
 golang.org/x/crypto/pbkdf2
-# golang.org/x/net v0.9.0
+# golang.org/x/net v0.14.0
 ## explicit; go 1.17
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -59,10 +61,10 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sys v0.7.0
+# golang.org/x/sys v0.11.0
 ## explicit; go 1.17
 golang.org/x/sys/unix
-# golang.org/x/text v0.9.0
+# golang.org/x/text v0.12.0
 ## explicit; go 1.17
 golang.org/x/text/cases
 golang.org/x/text/internal
@@ -77,11 +79,13 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# google.golang.org/genproto v0.0.0-20210917145530-b395a37504d4
-## explicit; go 1.11
+# google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5
+## explicit; go 1.19
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d
+## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.40.0
-## explicit; go 1.11
+# google.golang.org/grpc v1.57.0
+## explicit; go 1.17
 google.golang.org/grpc
 google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
@@ -90,14 +94,17 @@ google.golang.org/grpc/balancer/base
 google.golang.org/grpc/balancer/grpclb/state
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/binarylog/grpc_binarylog_v1
+google.golang.org/grpc/channelz
 google.golang.org/grpc/codes
 google.golang.org/grpc/connectivity
 google.golang.org/grpc/credentials
+google.golang.org/grpc/credentials/insecure
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
+google.golang.org/grpc/internal/balancer/gracefulswitch
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
 google.golang.org/grpc/internal/buffer
@@ -109,6 +116,7 @@ google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/grpcutil
 google.golang.org/grpc/internal/metadata
+google.golang.org/grpc/internal/pretty
 google.golang.org/grpc/internal/resolver
 google.golang.org/grpc/internal/resolver/dns
 google.golang.org/grpc/internal/resolver/passthrough
@@ -121,19 +129,24 @@ google.golang.org/grpc/internal/transport/networktype
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
 google.golang.org/grpc/peer
+google.golang.org/grpc/reflection
+google.golang.org/grpc/reflection/grpc_reflection_v1
+google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/resolver
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.27.1
-## explicit; go 1.9
+# google.golang.org/protobuf v1.31.0
+## explicit; go 1.11
+google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
 google.golang.org/protobuf/internal/descopts
 google.golang.org/protobuf/internal/detrand
 google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/json
 google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text

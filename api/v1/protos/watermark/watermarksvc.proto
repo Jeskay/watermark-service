@@ -38,7 +38,7 @@ message GetResponse {
 }
 
 message StatusRequest {
-    string ticketID = 1;
+    int64 ticketID = 1;
 }
 
 message StatusResponse {
@@ -54,7 +54,7 @@ message StatusResponse {
 }
 
 message WatermarkRequest {
-    string ticketID = 1;
+    int64 ticketID = 1;
     string mark = 2;
 }
 
@@ -68,7 +68,7 @@ message AddDocumentRequest {
 }
 
 message AddDocumentResponse {
-    string ticketID = 1;
+    int64 ticketID = 1;
     string err = 2;
 }
 

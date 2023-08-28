@@ -98,19 +98,19 @@ func (s *Set) Get(ctx context.Context, filters ...internal.Filter) ([]internal.D
 	return getResp.Documents, nil
 }
 
-func (s *Set) Add(ctx context.Context, doc *internal.Document) (string, error) {
+func (s *Set) Add(ctx context.Context, doc *internal.Document) (int64, error) {
 	resp, err := s.GetEndpoint(ctx, AddRequest{Document: doc})
 	if err != nil {
-		return "", err
+		return -1, err
 	}
 	addResp := resp.(AddResponse)
 	if addResp.Err != "" {
-		return "", errors.New(addResp.Err)
+		return -1, errors.New(addResp.Err)
 	}
 	return addResp.TicketID, nil
 }
 
-func (s *Set) Update(ctx context.Context, ticketID string, doc *internal.Document) (int, error) {
+func (s *Set) Update(ctx context.Context, ticketID int64, doc *internal.Document) (int, error) {
 	resp, err := s.GetEndpoint(ctx, UpdateRequest{TicketID: ticketID, Document: doc})
 	if err != nil {
 		return http.StatusBadRequest, err
@@ -122,7 +122,7 @@ func (s *Set) Update(ctx context.Context, ticketID string, doc *internal.Documen
 	return updateResp.Code, nil
 }
 
-func (s *Set) Remove(ctx context.Context, ticketID string) (int, error) {
+func (s *Set) Remove(ctx context.Context, ticketID int64) (int, error) {
 	resp, err := s.GetEndpoint(ctx, RemoveRequest{TicketID: ticketID})
 	removeResp := resp.(RemoveResponse)
 	if err != nil {

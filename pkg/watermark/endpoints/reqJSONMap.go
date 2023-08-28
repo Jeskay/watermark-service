@@ -11,37 +11,37 @@ type GetResponse struct {
 	Err       string              `json:"err,omitempty"`
 }
 
-type UpdateRequest struct {
-	TicketID int64              `json:"ticketID"`
-	Document *internal.Document `json:"document"`
-}
-
-type UpdateResponse struct {
-	Code int    `json:"code"`
-	Err  string `json:"err,omitempty"`
-}
-
-type AddRequest struct {
-	Document *internal.Document `json:"document"`
-}
-
-type AddResponse struct {
-	TicketID int64  `json:"ticketID"`
-	Err      string `json:"err,omitempty"`
-}
-
-type RemoveRequest struct {
+type StatusRequest struct {
 	TicketID int64 `json:"ticketID"`
 }
 
-type RemoveResponse struct {
+type StatusResponse struct {
+	Status internal.Status `json:"status"`
+	Err    string          `json:"err,omitempty"`
+}
+
+type WatermarkRequest struct {
+	TicketID int64  `json:"ticketID"`
+	Mark     string `json:"mark"`
+}
+
+type WatermarkResponse struct {
 	Code int    `json:"code"`
 	Err  string `json:"err,omitempty"`
+}
+
+type AddDocumentRequest struct {
+	Document *internal.Document `json:"document"`
+}
+
+type AddDocumentResponse struct {
+	TicketID int64  `json:"ticketID"`
+	Err      string `json:"err,omitempty"`
 }
 
 type ServiceStatusRequest struct{}
 
 type ServiceStatusResponse struct {
-	Code int    `json:"code"`
+	Code int    `json:"status"`
 	Err  string `json:"err,omitempty"`
 }

@@ -34,7 +34,7 @@ message GetResponse {
 }
 
 message UpdateRequest {
-    string ticketID = 1;
+    int64 ticketID = 1;
     Document document = 2;
 }
 
@@ -44,7 +44,7 @@ message UpdateResponse {
 }
 
 message RemoveRequest {
-    string ticketID = 1;
+    int64 ticketID = 1;
 }
 
 message RemoveResponse {
@@ -57,7 +57,7 @@ message AddRequest {
 }
 
 message AddResponse {
-    string ticketID = 1;
+    int64 ticketID = 1;
     string err = 2;
 }
 

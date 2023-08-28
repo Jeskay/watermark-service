@@ -45,7 +45,7 @@ func (g *grpcServer) Update(ctx context.Context, r *db.UpdateRequest) (*db.Updat
 }
 
 func (g *grpcServer) Add(ctx context.Context, r *db.AddRequest) (*db.AddResponse, error) {
-	_, resp, err := g.update.ServeGRPC(ctx, r)
+	_, resp, err := g.add.ServeGRPC(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (g *grpcServer) Add(ctx context.Context, r *db.AddRequest) (*db.AddResponse
 }
 
 func (g *grpcServer) Remove(ctx context.Context, r *db.RemoveRequest) (*db.RemoveResponse, error) {
-	_, resp, err := g.update.ServeGRPC(ctx, r)
+	_, resp, err := g.remove.ServeGRPC(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (g *grpcServer) Remove(ctx context.Context, r *db.RemoveRequest) (*db.Remov
 }
 
 func (g *grpcServer) ServiceStatus(ctx context.Context, r *db.ServiceStatusRequest) (*db.ServiceStatusResponse, error) {
-	_, resp, err := g.update.ServeGRPC(ctx, r)
+	_, resp, err := g.serviceStatus.ServeGRPC(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -127,21 +127,21 @@ func encodeGRPCGetResponse(_ context.Context, grpcResponse interface{}) (interfa
 }
 
 func encodeGRPCUpdateResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
-	response := grpcResponse.(*db.UpdateResponse)
-	return endpoints.UpdateResponse{Code: int(response.GetCode()), Err: response.GetErr()}, nil
+	response := grpcResponse.(endpoints.UpdateResponse)
+	return &db.UpdateResponse{Code: int64(response.Code), Err: response.Err}, nil
 }
 
 func encodeGRPCRemoveResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
-	response := grpcResponse.(*db.RemoveResponse)
-	return endpoints.RemoveResponse{Code: int(response.GetCode()), Err: response.GetErr()}, nil
+	response := grpcResponse.(endpoints.RemoveResponse)
+	return &db.RemoveResponse{Code: int64(response.Code), Err: response.Err}, nil
 }
 
 func encodeGRPCServiceStatusResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
-	response := grpcResponse.(*db.ServiceStatusResponse)
-	return endpoints.ServiceStatusResponse{Code: int(response.GetCode()), Err: response.GetErr()}, nil
+	response := grpcResponse.(endpoints.ServiceStatusResponse)
+	return &db.ServiceStatusResponse{Code: int64(response.Code), Err: response.Err}, nil
 }
 
 func encodeGRPCAddResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
-	response := grpcResponse.(*db.AddResponse)
-	return endpoints.AddResponse{TicketID: response.GetTicketID(), Err: response.GetErr()}, nil
+	response := grpcResponse.(endpoints.AddResponse)
+	return &db.AddResponse{TicketID: response.TicketID, Err: response.Err}, nil
 }

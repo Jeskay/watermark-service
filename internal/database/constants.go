@@ -1,9 +1,9 @@
 package database
 
 const (
-	DefaultDatabase = "gorm"
-	DefaultDBUser   = "gorm"
-	DefaultHost     = "myhost"
-	DefaultPort     = "myport"
-	DefaultPassword = "mypassword"
+	DefaultDatabase = "watermark"
+	DefaultDBUser   = "postgres"
+	DefaultHost     = "localhost"
+	DefaultPort     = "5432"
+	DefaultPassword = "ggghtdf"
 )
