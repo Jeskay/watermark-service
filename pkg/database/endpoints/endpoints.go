@@ -99,7 +99,7 @@ func (s *Set) Get(ctx context.Context, filters ...internal.Filter) ([]internal.D
 }
 
 func (s *Set) Add(ctx context.Context, doc *internal.Document) (int64, error) {
-	resp, err := s.GetEndpoint(ctx, AddRequest{Document: doc})
+	resp, err := s.AddEndpoint(ctx, AddRequest{Document: doc})
 	if err != nil {
 		return -1, err
 	}
@@ -111,7 +111,7 @@ func (s *Set) Add(ctx context.Context, doc *internal.Document) (int64, error) {
 }
 
 func (s *Set) Update(ctx context.Context, ticketID int64, doc *internal.Document) (int, error) {
-	resp, err := s.GetEndpoint(ctx, UpdateRequest{TicketID: ticketID, Document: doc})
+	resp, err := s.UpdateEndpoint(ctx, UpdateRequest{TicketID: ticketID, Document: doc})
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
@@ -123,7 +123,7 @@ func (s *Set) Update(ctx context.Context, ticketID int64, doc *internal.Document
 }
 
 func (s *Set) Remove(ctx context.Context, ticketID int64) (int, error) {
-	resp, err := s.GetEndpoint(ctx, RemoveRequest{TicketID: ticketID})
+	resp, err := s.RemoveEndpoint(ctx, RemoveRequest{TicketID: ticketID})
 	removeResp := resp.(RemoveResponse)
 	if err != nil {
 		return removeResp.Code, err
@@ -135,7 +135,7 @@ func (s *Set) Remove(ctx context.Context, ticketID int64) (int, error) {
 }
 
 func (s *Set) ServiceStatus(ctx context.Context) (int, error) {
-	resp, err := s.GetEndpoint(ctx, ServiceStatusRequest{})
+	resp, err := s.ServiceStatusEndpoint(ctx, ServiceStatusRequest{})
 	svcStatusResp := resp.(ServiceStatusResponse)
 	if err != nil {
 		return svcStatusResp.Code, err

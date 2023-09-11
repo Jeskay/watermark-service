@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = './auth';
+
+service authentication {
+    rpc Register (RegisterRequest) returns (RegisterResponse) {}
+    rpc Login (LoginRequest) returns (LoginResponse) {}
+    rpc Generate (GenerateRequest) returns (GenerateResponse) {}
+    rpc Verify (VerifyRequest) returns (VerifyResponse) {}
+    rpc Validate (ValidateRequest) returns (ValidateResponse) {}
+    rpc Disable (DisableRequest) returns (DisableResponse) {}
+    rpc ServiceStatus (ServiceStatusRequest) returns (ServiceStatusResponse) {}
+}
+
+message User {
+    string email = 1;
+    bytes id = 2;
+    string name = 3;
+    bool otp_enabled = 4;
+}
+
+message RegisterRequest {
+    string email = 1;
+    string name = 2;
+    string password = 3;
+}
+
+message RegisterResponse {
+    string error = 1;
+    bytes user_id = 2;
+}
+
+message LoginRequest {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginResponse {
+    int64 status = 1;
+    User user = 2;
+}
+
+message GenerateRequest {
+    bytes user_id = 1;
+}
+
+message GenerateResponse {
+    bytes base32 = 1;
+    string otp_url = 2;
+}
+
+message VerifyRequest {
+    bytes user_id = 1;
+    string token = 2;
+}
+
+message VerifyResponse {
+    bool otp_verified = 1;
+    User user = 2;
+}
+
+message ValidateRequest {
+    bytes user_id = 1;
+    string token = 2;
+}
+
+message ValidateResponse {
+    bool otp_valid = 1;
+}
+
+message DisableRequest {
+    bytes user_id = 1;
+}
+
+message DisableResponse {
+    bool otp_disabled = 1;
+    User user = 2;
+}
+
+message ServiceStatusRequest {}
+
+message ServiceStatusResponse {
+    int64 code = 1;
+    string err = 2;
+}
