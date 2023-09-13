@@ -13,6 +13,10 @@ type RegisterRequest struct {
 	Password string `json:"password"`
 }
 
+type GenerateRequest struct {
+	UserId string `json:"user_id"`
+}
+
 type RegisterResponse struct {
 	UserId string `json:"userId"`
 	Err    string `json:"err,omitempty"`
@@ -21,6 +25,11 @@ type RegisterResponse struct {
 type LoginResponse struct {
 	Status int64          `json:"status"`
 	User   *internal.User `json:"user"`
+}
+
+type GenerateResponse struct {
+	Base32     string `json:"base32"`
+	OtpAuthUrl string `json:"otp_auth_url"`
 }
 
 type ServiceStatusRequest struct{}

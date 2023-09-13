@@ -3,7 +3,7 @@ package authentication
 import (
 	"fmt"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -23,7 +23,7 @@ type User struct {
 }
 
 func (user *User) BeforeCreate(*gorm.DB) error {
-	user.ID = uuid.NewV4()
+	user.ID = uuid.New()
 
 	return nil
 }

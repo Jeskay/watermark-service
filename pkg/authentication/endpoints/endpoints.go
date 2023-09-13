@@ -13,6 +13,7 @@ import (
 type Set struct {
 	LoginEndpoint         endpoint.Endpoint
 	RegisterEndpoint      endpoint.Endpoint
+	GenerateEndpoint      endpoint.Endpoint
 	ServiceStatusEndpoint endpoint.Endpoint
 }
 
@@ -20,6 +21,7 @@ func NewEndpointSet(svc authentication.Service) Set {
 	return Set{
 		LoginEndpoint:         MakeLoginEndpoint(svc),
 		RegisterEndpoint:      MakeRegisterEndpoint(svc),
+		GenerateEndpoint:      MakeGenerateEndpoint(svc),
 		ServiceStatusEndpoint: MakeServiceStatusEndpoint(svc),
 	}
 }
@@ -40,6 +42,14 @@ func MakeRegisterEndpoint(svc authentication.Service) endpoint.Endpoint {
 			return RegisterResponse{UserId: userId, Err: err.Error()}, nil
 		}
 		return RegisterResponse{UserId: userId, Err: ""}, nil
+	}
+}
+
+func MakeGenerateEndpoint(svc authentication.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(GenerateRequest)
+		base_32, otp_auth_url := svc.Generate(ctx, req.UserId)
+		return GenerateResponse{Base32: base_32, OtpAuthUrl: otp_auth_url}, nil
 	}
 }
 
@@ -73,6 +83,15 @@ func (s *Set) Register(ctx context.Context, email, name, password string) (strin
 		return registerResp.UserId, errors.New(registerResp.Err)
 	}
 	return registerResp.UserId, nil
+}
+
+func (s *Set) Generate(ctx context.Context, userId string) (string, string, error) {
+	resp, err := s.GenerateEndpoint(ctx, GenerateRequest{UserId: userId})
+	generateResp := resp.(GenerateResponse)
+	if err != nil {
+		return generateResp.Base32, generateResp.OtpAuthUrl, err
+	}
+	return generateResp.Base32, generateResp.OtpAuthUrl, nil
 }
 
 func (s *Set) ServiceStatus(ctx context.Context) (int, error) {

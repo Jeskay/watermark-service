@@ -9,6 +9,8 @@ import (
 	"watermark-service/internal"
 	auth "watermark-service/internal/authentication"
 
+	"github.com/google/uuid"
+	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 
 	"gorm.io/gorm"
@@ -56,6 +58,34 @@ func (a *authService) Register(_ context.Context, email, name, password string) 
 		return "", errors.New(result.Error.Error())
 	}
 	return newUser.ID.String(), nil
+}
+
+func (a *authService) Generate(_ context.Context, userId string) (string, string) {
+	var user auth.User
+	var unmarshalled uuid.UUID
+	err := unmarshalled.UnmarshalBinary([]byte(userId))
+	if err != nil {
+		return "", ""
+	}
+	result := a.orm.First(&user, "id = ?", unmarshalled)
+	if result.Error != nil {
+		return "", ""
+	}
+	key, err := totp.Generate(totp.GenerateOpts{
+		Issuer:      "watermark-service",
+		AccountName: user.Email,
+		SecretSize:  16,
+	})
+	if err != nil {
+		return "", ""
+	}
+	updateData := auth.User{
+		Otp_secret:   key.Secret(),
+		Otp_auth_url: key.URL(),
+	}
+
+	a.orm.Model(&user).Updates(updateData)
+	return key.Secret(), key.URL()
 }
 
 func (a *authService) ServiceStatus(_ context.Context) (int, error) {
