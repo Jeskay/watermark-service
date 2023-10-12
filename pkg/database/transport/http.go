@@ -16,6 +16,10 @@ import (
 func NewHttpHandler(ep endpoints.Set) http.Handler {
 	m := http.NewServeMux()
 
+	opts := []httpkit.ServerOption{
+		httpkit.ServerBefore(injectContext),
+	}
+
 	m.Handle("/healthz", httpkit.NewServer(
 		ep.ServiceStatusEndpoint,
 		decodeHTTPServiceStatusRequest,
@@ -25,21 +29,25 @@ func NewHttpHandler(ep endpoints.Set) http.Handler {
 		ep.UpdateEndpoint,
 		decodeHTTPUpdateRequest,
 		encodeResponse,
+		opts...,
 	))
 	m.Handle("/add", httpkit.NewServer(
 		ep.AddEndpoint,
 		decodeHTTPAddRequest,
 		encodeResponse,
+		opts...,
 	))
 	m.Handle("/get", httpkit.NewServer(
 		ep.GetEndpoint,
 		decodeHTTPGetRequest,
 		encodeResponse,
+		opts...,
 	))
 	m.Handle("/remove", httpkit.NewServer(
 		ep.RemoveEndpoint,
 		decodeHTTPRemoveRequest,
 		encodeResponse,
+		opts...,
 	))
 
 	return m
@@ -110,6 +118,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"error": err.Error(),
 	})
+}
+
+func injectContext(ctx context.Context, r *http.Request) context.Context {
+	return context.WithValue(ctx, "token", r.Header.Get("Token"))
 }
 
 var logger log.Logger

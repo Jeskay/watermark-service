@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"strings"
 	"watermark-service/internal"
 	auth "watermark-service/internal/authentication"
+
+	jwt "github.com/golang-jwt/jwt/v4"
 
 	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
@@ -17,32 +20,50 @@ import (
 )
 
 type authService struct {
-	orm *gorm.DB
+	orm        *gorm.DB
+	signingKey []byte
 }
 
-func NewService(dbORM *gorm.DB) *authService {
-	return &authService{orm: dbORM}
+type userClaims struct {
+	internal.User
+	jwt.RegisteredClaims
 }
 
-func (a *authService) Login(_ context.Context, email, password string) (int64, *internal.User) {
+func NewService(dbORM *gorm.DB, signingKey string) *authService {
+	return &authService{orm: dbORM, signingKey: []byte(signingKey)}
+}
+
+func (a *authService) Login(_ context.Context, email, password string) (int64, string) {
 	var user auth.User
 	result := a.orm.First(&user, "email = ?", email)
 	if result.Error != nil {
-		return http.StatusUnauthorized, nil
+		return http.StatusUnauthorized, ""
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return http.StatusUnauthorized, nil
+		return http.StatusUnauthorized, ""
 	}
-	userResp := &internal.User{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
+	claims := userClaims{
+		internal.User{
+			ID:       user.ID,
+			Name:     user.Name,
+			Email:    user.Email,
+			Password: user.Password,
+		},
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(12 * time.Hour)),
+			Issuer:    "watermark-service",
+		},
 	}
-	return http.StatusAccepted, userResp
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString(a.signingKey)
+	if err != nil {
+		return http.StatusUnauthorized, ""
+	}
+	return http.StatusAccepted, signedToken
 }
 
 func (a *authService) Register(_ context.Context, email, name, password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), 16)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), 8)
 	if err != nil {
 		return "", err
 	}
@@ -86,6 +107,91 @@ func (a *authService) Generate(_ context.Context, userId string) (string, string
 
 	a.orm.Model(&user).Updates(updateData)
 	return key.Secret(), key.URL()
+}
+
+func (a *authService) Verify(_ context.Context, userId, token string) (bool, *internal.User) {
+	var user auth.User
+	var unmarshalled uuid.UUID
+	err := unmarshalled.UnmarshalBinary([]byte(userId))
+	if err != nil {
+		return false, nil
+	}
+	result := a.orm.First(&user, "id = ?", unmarshalled)
+	if result.Error != nil {
+		return false, nil
+	}
+	isValid := totp.Validate(token, user.Otp_secret)
+	if !isValid {
+		return false, nil
+	}
+	updateData := auth.User{
+		Otp_enabled:  true,
+		Otp_verified: true,
+	}
+	a.orm.Model(&user).Updates(updateData)
+	userResp := internal.User{
+		ID:         user.ID,
+		Name:       user.Name,
+		Email:      user.Email,
+		OtpEnabled: user.Otp_enabled,
+	}
+	return true, &userResp
+}
+
+func (a *authService) VerifyJwt(_ context.Context, tokenString string) (bool, *internal.User) {
+	token, err := jwt.ParseWithClaims(tokenString, &userClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return a.signingKey, nil
+	})
+
+	if err != nil {
+		return false, nil
+	}
+
+	if claims, ok := token.Claims.(*userClaims); ok && token.Valid {
+		return true, &internal.User{
+			ID:         claims.User.ID,
+			Name:       claims.Name,
+			Email:      claims.Email,
+			OtpEnabled: claims.OtpEnabled,
+		}
+	}
+	return false, nil
+}
+
+func (a *authService) Validate(_ context.Context, userID, token string) bool {
+	var user auth.User
+	var unmarshalled uuid.UUID
+	err := unmarshalled.UnmarshalBinary([]byte(userID))
+	if err != nil {
+		return false
+	}
+	result := a.orm.First(&user, "id = ?", unmarshalled)
+	if result.Error != nil {
+		return false
+	}
+	return totp.Validate(token, user.Otp_secret)
+}
+
+func (a *authService) Disable(_ context.Context, userId string) (bool, *internal.User) {
+	var user auth.User
+	var unmarshalled uuid.UUID
+	err := unmarshalled.UnmarshalBinary([]byte(userId))
+	if err != nil {
+		return false, nil
+	}
+	result := a.orm.First(&user, "id = ?", unmarshalled)
+	if result.Error != nil {
+		return false, nil
+	}
+	user.Otp_enabled = false
+	a.orm.Save(&user)
+	userResp := internal.User{
+		ID:         user.ID,
+		Name:       user.Name,
+		Email:      user.Email,
+		OtpEnabled: user.Otp_enabled,
+	}
+	return user.Otp_enabled, &userResp
 }
 
 func (a *authService) ServiceStatus(_ context.Context) (int, error) {

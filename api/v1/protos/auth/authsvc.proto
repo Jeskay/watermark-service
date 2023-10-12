@@ -10,6 +10,7 @@ service authentication {
     rpc Generate (GenerateRequest) returns (GenerateResponse) {}
     rpc Verify (VerifyRequest) returns (VerifyResponse) {}
     rpc Validate (ValidateRequest) returns (ValidateResponse) {}
+    rpc VerifyJwt (VerifyJwtRequest) returns (VerifyJwtResponse) {}
     rpc Disable (DisableRequest) returns (DisableResponse) {}
     rpc ServiceStatus (ServiceStatusRequest) returns (ServiceStatusResponse) {}
 }
@@ -19,6 +20,7 @@ message User {
     bytes id = 2;
     string name = 3;
     bool otp_enabled = 4;
+    bool otp_verified = 5;
 }
 
 message RegisterRequest {
@@ -39,7 +41,7 @@ message LoginRequest {
 
 message LoginResponse {
     int64 status = 1;
-    User user = 2;
+    string token = 2;
 }
 
 message GenerateRequest {
@@ -58,6 +60,15 @@ message VerifyRequest {
 
 message VerifyResponse {
     bool otp_verified = 1;
+    User user = 2;
+}
+
+message VerifyJwtRequest {
+    string token = 1;
+}
+
+message VerifyJwtResponse {
+    bool verified = 1;
     User user = 2;
 }
 

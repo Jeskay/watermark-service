@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,6 +30,7 @@ const (
 var (
 	logger   log.Logger
 	grpcAddr = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
+	httpAddr = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
 )
 
 func main() {
@@ -38,12 +40,26 @@ func main() {
 	}
 
 	var (
-		service    = authsvc.NewService(orm)
-		eps        = endpoints.NewEndpointSet(service)
-		grpcServer = transport.NewGRPCServer(eps)
+		service     = authsvc.NewService(orm, "SECRET_TOKEN")
+		eps         = endpoints.NewEndpointSet(service)
+		grpcServer  = transport.NewGRPCServer(eps)
+		httpHandler = transport.NewHTTPHandler(eps)
 	)
 
 	var g group.Group
+	{
+		httpListener, err := net.Listen("tcp", httpAddr)
+		if err != nil {
+			logger.Log("transport", "HTTP", "during", "Listen", "error", err)
+			os.Exit(1)
+		}
+		g.Add(func() error {
+			logger.Log("transport", "HTTP", "addr", httpAddr)
+			return http.Serve(httpListener, httpHandler)
+		}, func(error) {
+			httpListener.Close()
+		})
+	}
 	{
 		grpcListener, err := net.Listen("tcp", grpcAddr)
 		if err != nil {

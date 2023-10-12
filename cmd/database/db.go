@@ -28,9 +28,10 @@ const (
 )
 
 var (
-	logger   log.Logger
-	httpAddr = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
-	grpcAddr = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
+	logger      log.Logger
+	httpAddr    = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
+	grpcAddr    = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
+	authSvcAddr = net.JoinHostPort("localhost", util.EnvString("AUTH_SVC_PORT", "9022"))
 )
 
 func main() {
@@ -40,8 +41,13 @@ func main() {
 		logger.Log("FATAL: failed to load db with error ", err.Error())
 	}
 
+	var service dbsvc.Service
+	{
+		service = dbsvc.NewService(orm)
+		service = dbsvc.AuthMiddleware(authSvcAddr)(service)
+	}
+
 	var (
-		service     = dbsvc.NewService(orm)
 		eps         = endpoints.NewEndpointSet(service)
 		httpHandler = transport.NewHttpHandler(eps)
 		grpcServer  = transport.NewGRPCServer(eps)

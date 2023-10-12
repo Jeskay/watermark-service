@@ -11,26 +11,33 @@ import (
 )
 
 type Set struct {
-	LoginEndpoint         endpoint.Endpoint
-	RegisterEndpoint      endpoint.Endpoint
-	GenerateEndpoint      endpoint.Endpoint
-	ServiceStatusEndpoint endpoint.Endpoint
+	LoginEndpoint           endpoint.Endpoint
+	RegisterEndpoint        endpoint.Endpoint
+	GenerateEndpoint        endpoint.Endpoint
+	VerifyTwoFactorEndpoint endpoint.Endpoint
+	ValidateEndpoint        endpoint.Endpoint
+	VerifyJwtEndpoint       endpoint.Endpoint
+	DisableEndpoint         endpoint.Endpoint
+	ServiceStatusEndpoint   endpoint.Endpoint
 }
 
 func NewEndpointSet(svc authentication.Service) Set {
 	return Set{
-		LoginEndpoint:         MakeLoginEndpoint(svc),
-		RegisterEndpoint:      MakeRegisterEndpoint(svc),
-		GenerateEndpoint:      MakeGenerateEndpoint(svc),
-		ServiceStatusEndpoint: MakeServiceStatusEndpoint(svc),
+		LoginEndpoint:           MakeLoginEndpoint(svc),
+		RegisterEndpoint:        MakeRegisterEndpoint(svc),
+		GenerateEndpoint:        MakeGenerateEndpoint(svc),
+		VerifyTwoFactorEndpoint: MakeVerifyTwoFactorEndpoint(svc),
+		ValidateEndpoint:        MakeValidateEndpoint(svc),
+		VerifyJwtEndpoint:       MakeVerifyJwtEndpoint(svc),
+		ServiceStatusEndpoint:   MakeServiceStatusEndpoint(svc),
 	}
 }
 
 func MakeLoginEndpoint(svc authentication.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(LoginRequest)
-		status, user := svc.Login(ctx, req.Email, req.Password)
-		return LoginResponse{Status: status, User: user}, nil
+		status, token := svc.Login(ctx, req.Email, req.Password)
+		return LoginResponse{Status: status, Token: token}, nil
 	}
 }
 
@@ -53,6 +60,38 @@ func MakeGenerateEndpoint(svc authentication.Service) endpoint.Endpoint {
 	}
 }
 
+func MakeVerifyTwoFactorEndpoint(svc authentication.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(VerifyTwoFactorRequest)
+		otp_verified, user := svc.Verify(ctx, req.UserId, req.Token)
+		return VerifyTwoFactorResponse{OtpVerified: otp_verified, User: user}, nil
+	}
+}
+
+func MakeValidateEndpoint(svc authentication.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(ValidateRequest)
+		otp_valid := svc.Validate(ctx, req.UserId, req.Token)
+		return ValidateResponse{otp_valid}, nil
+	}
+}
+
+func MakeVerifyJwtEndpoint(svc authentication.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(VerifyJwtRequest)
+		verified, user := svc.VerifyJwt(ctx, req.Token)
+		return VerifyJwtResponse{verified, user}, nil
+	}
+}
+
+func MakeDisableEndpoint(svc authentication.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(DisableRequest)
+		otp_disabled, user := svc.Disable(ctx, req.UserId)
+		return DisableResponse{OtpDisabled: otp_disabled, User: user}, nil
+	}
+}
+
 func MakeServiceStatusEndpoint(svc authentication.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		_ = request.(ServiceStatusRequest)
@@ -64,13 +103,13 @@ func MakeServiceStatusEndpoint(svc authentication.Service) endpoint.Endpoint {
 	}
 }
 
-func (s *Set) Login(ctx context.Context, email, password string) (int64, *internal.User) {
+func (s *Set) Login(ctx context.Context, email, password string) (int64, string) {
 	resp, err := s.LoginEndpoint(ctx, LoginRequest{Email: email, Password: password})
 	if err != nil {
-		return http.StatusUnauthorized, nil
+		return http.StatusUnauthorized, ""
 	}
 	loginResp := resp.(LoginResponse)
-	return loginResp.Status, loginResp.User
+	return loginResp.Status, loginResp.Token
 }
 
 func (s *Set) Register(ctx context.Context, email, name, password string) (string, error) {
@@ -92,6 +131,42 @@ func (s *Set) Generate(ctx context.Context, userId string) (string, string, erro
 		return generateResp.Base32, generateResp.OtpAuthUrl, err
 	}
 	return generateResp.Base32, generateResp.OtpAuthUrl, nil
+}
+
+func (s *Set) Verify(ctx context.Context, userId, token string) (bool, *internal.User) {
+	resp, err := s.VerifyTwoFactorEndpoint(ctx, VerifyTwoFactorRequest{UserId: userId, Token: token})
+	verifyResp := resp.(VerifyTwoFactorResponse)
+	if err != nil {
+		return false, verifyResp.User
+	}
+	return verifyResp.OtpVerified, verifyResp.User
+}
+
+func (s *Set) Validate(ctx context.Context, userId, token string) bool {
+	resp, err := s.ValidateEndpoint(ctx, ValidateRequest{UserId: userId, Token: token})
+	validateResp := resp.(ValidateResponse)
+	if err != nil {
+		return false
+	}
+	return validateResp.OtpValid
+}
+
+func (s *Set) VerifyJwt(ctx context.Context, token string) (bool, *internal.User) {
+	resp, err := s.VerifyJwtEndpoint(ctx, VerifyJwtRequest{Token: token})
+	verifyJwtResp := resp.(VerifyJwtResponse)
+	if err != nil {
+		return false, verifyJwtResp.User
+	}
+	return verifyJwtResp.Verified, verifyJwtResp.User
+}
+
+func (s *Set) Disabled(ctx context.Context, userId string) (bool, *internal.User) {
+	resp, err := s.DisableEndpoint(ctx, DisableRequest{UserId: userId})
+	disableResp := resp.(DisableResponse)
+	if err != nil {
+		return false, disableResp.User
+	}
+	return disableResp.OtpDisabled, disableResp.User
 }
 
 func (s *Set) ServiceStatus(ctx context.Context) (int, error) {

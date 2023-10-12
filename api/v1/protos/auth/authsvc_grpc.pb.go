@@ -24,6 +24,7 @@ const (
 	Authentication_Generate_FullMethodName      = "/auth.authentication/Generate"
 	Authentication_Verify_FullMethodName        = "/auth.authentication/Verify"
 	Authentication_Validate_FullMethodName      = "/auth.authentication/Validate"
+	Authentication_VerifyJwt_FullMethodName     = "/auth.authentication/VerifyJwt"
 	Authentication_Disable_FullMethodName       = "/auth.authentication/Disable"
 	Authentication_ServiceStatus_FullMethodName = "/auth.authentication/ServiceStatus"
 )
@@ -37,6 +38,7 @@ type AuthenticationClient interface {
 	Generate(ctx context.Context, in *GenerateRequest, opts ...grpc.CallOption) (*GenerateResponse, error)
 	Verify(ctx context.Context, in *VerifyRequest, opts ...grpc.CallOption) (*VerifyResponse, error)
 	Validate(ctx context.Context, in *ValidateRequest, opts ...grpc.CallOption) (*ValidateResponse, error)
+	VerifyJwt(ctx context.Context, in *VerifyJwtRequest, opts ...grpc.CallOption) (*VerifyJwtResponse, error)
 	Disable(ctx context.Context, in *DisableRequest, opts ...grpc.CallOption) (*DisableResponse, error)
 	ServiceStatus(ctx context.Context, in *ServiceStatusRequest, opts ...grpc.CallOption) (*ServiceStatusResponse, error)
 }
@@ -94,6 +96,15 @@ func (c *authenticationClient) Validate(ctx context.Context, in *ValidateRequest
 	return out, nil
 }
 
+func (c *authenticationClient) VerifyJwt(ctx context.Context, in *VerifyJwtRequest, opts ...grpc.CallOption) (*VerifyJwtResponse, error) {
+	out := new(VerifyJwtResponse)
+	err := c.cc.Invoke(ctx, Authentication_VerifyJwt_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *authenticationClient) Disable(ctx context.Context, in *DisableRequest, opts ...grpc.CallOption) (*DisableResponse, error) {
 	out := new(DisableResponse)
 	err := c.cc.Invoke(ctx, Authentication_Disable_FullMethodName, in, out, opts...)
@@ -121,6 +132,7 @@ type AuthenticationServer interface {
 	Generate(context.Context, *GenerateRequest) (*GenerateResponse, error)
 	Verify(context.Context, *VerifyRequest) (*VerifyResponse, error)
 	Validate(context.Context, *ValidateRequest) (*ValidateResponse, error)
+	VerifyJwt(context.Context, *VerifyJwtRequest) (*VerifyJwtResponse, error)
 	Disable(context.Context, *DisableRequest) (*DisableResponse, error)
 	ServiceStatus(context.Context, *ServiceStatusRequest) (*ServiceStatusResponse, error)
 	mustEmbedUnimplementedAuthenticationServer()
@@ -144,6 +156,9 @@ func (UnimplementedAuthenticationServer) Verify(context.Context, *VerifyRequest)
 }
 func (UnimplementedAuthenticationServer) Validate(context.Context, *ValidateRequest) (*ValidateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
+}
+func (UnimplementedAuthenticationServer) VerifyJwt(context.Context, *VerifyJwtRequest) (*VerifyJwtResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyJwt not implemented")
 }
 func (UnimplementedAuthenticationServer) Disable(context.Context, *DisableRequest) (*DisableResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Disable not implemented")
@@ -254,6 +269,24 @@ func _Authentication_Validate_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Authentication_VerifyJwt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VerifyJwtRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthenticationServer).VerifyJwt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Authentication_VerifyJwt_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthenticationServer).VerifyJwt(ctx, req.(*VerifyJwtRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Authentication_Disable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DisableRequest)
 	if err := dec(in); err != nil {
@@ -316,6 +349,10 @@ var Authentication_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Validate",
 			Handler:    _Authentication_Validate_Handler,
+		},
+		{
+			MethodName: "VerifyJwt",
+			Handler:    _Authentication_VerifyJwt_Handler,
 		},
 		{
 			MethodName: "Disable",
