@@ -33,13 +33,17 @@ func NewService(dbORM *gorm.DB, signingKey string) *authService {
 	return &authService{orm: dbORM, signingKey: []byte(signingKey)}
 }
 
-func (a *authService) Login(_ context.Context, email, password string) (int64, string) {
+func (a *authService) Login(ctx context.Context, email, password string) (int64, string) {
 	var user auth.User
+	token2FA := ctx.Value("2FA").(string)
 	result := a.orm.First(&user, "email = ?", email)
 	if result.Error != nil {
 		return http.StatusUnauthorized, ""
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		return http.StatusUnauthorized, ""
+	}
+	if user.Otp_enabled && user.Otp_verified && !totp.Validate(token2FA, user.Otp_secret) {
 		return http.StatusUnauthorized, ""
 	}
 	claims := userClaims{
@@ -81,14 +85,13 @@ func (a *authService) Register(_ context.Context, email, name, password string) 
 	return newUser.ID.String(), nil
 }
 
-func (a *authService) Generate(_ context.Context, userId string) (string, string) {
+func (a *authService) Generate(ctx context.Context) (string, string) {
 	var user auth.User
-	var unmarshalled uuid.UUID
-	err := unmarshalled.UnmarshalBinary([]byte(userId))
-	if err != nil {
+	claimedUser, ok := ctx.Value("user").(*internal.User)
+	if !ok {
 		return "", ""
 	}
-	result := a.orm.First(&user, "id = ?", unmarshalled)
+	result := a.orm.First(&user, "id = ?", claimedUser.ID)
 	if result.Error != nil {
 		return "", ""
 	}
@@ -101,6 +104,7 @@ func (a *authService) Generate(_ context.Context, userId string) (string, string
 		return "", ""
 	}
 	updateData := auth.User{
+		Otp_enabled:  true,
 		Otp_secret:   key.Secret(),
 		Otp_auth_url: key.URL(),
 	}
@@ -109,14 +113,13 @@ func (a *authService) Generate(_ context.Context, userId string) (string, string
 	return key.Secret(), key.URL()
 }
 
-func (a *authService) Verify(_ context.Context, userId, token string) (bool, *internal.User) {
+func (a *authService) Verify(ctx context.Context, token string) (bool, *internal.User) {
 	var user auth.User
-	var unmarshalled uuid.UUID
-	err := unmarshalled.UnmarshalBinary([]byte(userId))
-	if err != nil {
+	claimedUser, ok := ctx.Value("user").(*internal.User)
+	if !ok {
 		return false, nil
 	}
-	result := a.orm.First(&user, "id = ?", unmarshalled)
+	result := a.orm.First(&user, "id = ?", claimedUser.ID)
 	if result.Error != nil {
 		return false, nil
 	}
@@ -124,11 +127,12 @@ func (a *authService) Verify(_ context.Context, userId, token string) (bool, *in
 	if !isValid {
 		return false, nil
 	}
-	updateData := auth.User{
-		Otp_enabled:  true,
-		Otp_verified: true,
+	if user.Otp_enabled && !user.Otp_verified {
+		updateData := auth.User{
+			Otp_verified: true,
+		}
+		a.orm.Model(&user).Updates(updateData)
 	}
-	a.orm.Model(&user).Updates(updateData)
 	userResp := internal.User{
 		ID:         user.ID,
 		Name:       user.Name,
@@ -172,14 +176,13 @@ func (a *authService) Validate(_ context.Context, userID, token string) bool {
 	return totp.Validate(token, user.Otp_secret)
 }
 
-func (a *authService) Disable(_ context.Context, userId string) (bool, *internal.User) {
+func (a *authService) Disable(ctx context.Context) (bool, *internal.User) {
 	var user auth.User
-	var unmarshalled uuid.UUID
-	err := unmarshalled.UnmarshalBinary([]byte(userId))
-	if err != nil {
+	claimedUser, ok := ctx.Value("user").(internal.User)
+	if !ok {
 		return false, nil
 	}
-	result := a.orm.First(&user, "id = ?", unmarshalled)
+	result := a.orm.First(&user, "id = ?", claimedUser.ID)
 	if result.Error != nil {
 		return false, nil
 	}

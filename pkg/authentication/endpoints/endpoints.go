@@ -54,8 +54,8 @@ func MakeRegisterEndpoint(svc authentication.Service) endpoint.Endpoint {
 
 func MakeGenerateEndpoint(svc authentication.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(GenerateRequest)
-		base_32, otp_auth_url := svc.Generate(ctx, req.UserId)
+		_ = request.(GenerateRequest)
+		base_32, otp_auth_url := svc.Generate(ctx)
 		return GenerateResponse{Base32: base_32, OtpAuthUrl: otp_auth_url}, nil
 	}
 }
@@ -63,7 +63,7 @@ func MakeGenerateEndpoint(svc authentication.Service) endpoint.Endpoint {
 func MakeVerifyTwoFactorEndpoint(svc authentication.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(VerifyTwoFactorRequest)
-		otp_verified, user := svc.Verify(ctx, req.UserId, req.Token)
+		otp_verified, user := svc.Verify(ctx, req.Token)
 		return VerifyTwoFactorResponse{OtpVerified: otp_verified, User: user}, nil
 	}
 }
@@ -86,8 +86,8 @@ func MakeVerifyJwtEndpoint(svc authentication.Service) endpoint.Endpoint {
 
 func MakeDisableEndpoint(svc authentication.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(DisableRequest)
-		otp_disabled, user := svc.Disable(ctx, req.UserId)
+		_ = request.(DisableRequest)
+		otp_disabled, user := svc.Disable(ctx)
 		return DisableResponse{OtpDisabled: otp_disabled, User: user}, nil
 	}
 }
@@ -125,7 +125,7 @@ func (s *Set) Register(ctx context.Context, email, name, password string) (strin
 }
 
 func (s *Set) Generate(ctx context.Context, userId string) (string, string, error) {
-	resp, err := s.GenerateEndpoint(ctx, GenerateRequest{UserId: userId})
+	resp, err := s.GenerateEndpoint(ctx, GenerateRequest{})
 	generateResp := resp.(GenerateResponse)
 	if err != nil {
 		return generateResp.Base32, generateResp.OtpAuthUrl, err
@@ -133,8 +133,8 @@ func (s *Set) Generate(ctx context.Context, userId string) (string, string, erro
 	return generateResp.Base32, generateResp.OtpAuthUrl, nil
 }
 
-func (s *Set) Verify(ctx context.Context, userId, token string) (bool, *internal.User) {
-	resp, err := s.VerifyTwoFactorEndpoint(ctx, VerifyTwoFactorRequest{UserId: userId, Token: token})
+func (s *Set) Verify(ctx context.Context, token string) (bool, *internal.User) {
+	resp, err := s.VerifyTwoFactorEndpoint(ctx, VerifyTwoFactorRequest{Token: token})
 	verifyResp := resp.(VerifyTwoFactorResponse)
 	if err != nil {
 		return false, verifyResp.User
@@ -160,8 +160,8 @@ func (s *Set) VerifyJwt(ctx context.Context, token string) (bool, *internal.User
 	return verifyJwtResp.Verified, verifyJwtResp.User
 }
 
-func (s *Set) Disabled(ctx context.Context, userId string) (bool, *internal.User) {
-	resp, err := s.DisableEndpoint(ctx, DisableRequest{UserId: userId})
+func (s *Set) Disabled(ctx context.Context) (bool, *internal.User) {
+	resp, err := s.DisableEndpoint(ctx, DisableRequest{})
 	disableResp := resp.(DisableResponse)
 	if err != nil {
 		return false, disableResp.User

@@ -98,13 +98,12 @@ func decodeGRPCRegisterRequest(_ context.Context, grpcReq interface{}) (interfac
 }
 
 func decodeGRPCGenerateRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*auth.GenerateRequest)
-	return endpoints.GenerateRequest{UserId: string(req.GetUserId())}, nil
+	return endpoints.GenerateRequest{}, nil
 }
 
 func decodeGRPCVerifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*auth.VerifyRequest)
-	return endpoints.VerifyTwoFactorRequest{UserId: string(req.GetUserId()), Token: req.GetToken()}, nil
+	return endpoints.VerifyTwoFactorRequest{Token: req.GetToken()}, nil
 }
 
 func decodeGRPCVerifyJwtRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {

@@ -44,9 +44,7 @@ message LoginResponse {
     string token = 2;
 }
 
-message GenerateRequest {
-    bytes user_id = 1;
-}
+message GenerateRequest {}
 
 message GenerateResponse {
     bytes base32 = 1;
@@ -54,7 +52,6 @@ message GenerateResponse {
 }
 
 message VerifyRequest {
-    bytes user_id = 1;
     string token = 2;
 }
 
@@ -73,7 +70,6 @@ message VerifyJwtResponse {
 }
 
 message ValidateRequest {
-    bytes user_id = 1;
     string token = 2;
 }
 
@@ -81,9 +77,7 @@ message ValidateResponse {
     bool otp_valid = 1;
 }
 
-message DisableRequest {
-    bytes user_id = 1;
-}
+message DisableRequest {}
 
 message DisableResponse {
     bool otp_disabled = 1;

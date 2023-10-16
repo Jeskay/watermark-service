@@ -39,8 +39,13 @@ func main() {
 		logger.Log("FATAL: failed to load db with error ", err.Error())
 	}
 
+	var service authsvc.Service
+	{
+		service = authsvc.NewService(orm, "SECRET_TOKEN")
+		service = authsvc.AuthMiddleware()(service)
+	}
+
 	var (
-		service     = authsvc.NewService(orm, "SECRET_TOKEN")
 		eps         = endpoints.NewEndpointSet(service)
 		grpcServer  = transport.NewGRPCServer(eps)
 		httpHandler = transport.NewHTTPHandler(eps)

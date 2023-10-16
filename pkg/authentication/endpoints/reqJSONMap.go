@@ -13,13 +13,10 @@ type RegisterRequest struct {
 	Password string `json:"password"`
 }
 
-type GenerateRequest struct {
-	UserId string `json:"user_id"`
-}
+type GenerateRequest struct{}
 
 type VerifyTwoFactorRequest struct {
-	UserId string `json:"user_id"`
-	Token  string `json:"token"`
+	Token string `json:"token"`
 }
 
 type ValidateRequest struct {
@@ -31,9 +28,7 @@ type VerifyJwtRequest struct {
 	Token string `json:"token"`
 }
 
-type DisableRequest struct {
-	UserId string `json:"user_id"`
-}
+type DisableRequest struct{}
 type RegisterResponse struct {
 	UserId string `json:"userId"`
 	Err    string `json:"err,omitempty"`
