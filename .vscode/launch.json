@@ -17,6 +17,13 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/authentication/auth.go"
+        },
+        {
+            "name": "Image Microservice",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/watermark/watermark.go"
         }
     ]
 }

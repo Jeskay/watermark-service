@@ -22,21 +22,25 @@ import (
 const (
 	defaultHTTPPort = "8081"
 	defaultGRPCPort = "8082"
-	defaultDBPort   = "9092"
 )
 
 func main() {
 	var (
-		logger        log.Logger
-		httpAddr      = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
-		grpcAddr      = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
-		dbServiceAddr = net.JoinHostPort("localhost", util.EnvString("DB_PORT", defaultDBPort))
+		logger   log.Logger
+		httpAddr = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
+		grpcAddr = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
 	)
 
 	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+
+	var service watermark.Service
+	{
+		service = watermark.NewService()
+		service = watermark.WatermarkMiddleware()(service)
+	}
+
 	var (
-		service     = watermark.NewService(dbServiceAddr)
 		eps         = endpoints.NewEndpointSet(service)
 		httpHandler = transport.NewHTTPHandler(eps)
 		grpcServer  = transport.NewGRPCServer(eps)

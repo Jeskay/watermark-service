@@ -19,10 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Watermark_Get_FullMethodName           = "/watermark.Watermark/Get"
-	Watermark_Watermark_FullMethodName     = "/watermark.Watermark/Watermark"
-	Watermark_Status_FullMethodName        = "/watermark.Watermark/Status"
-	Watermark_AddDocument_FullMethodName   = "/watermark.Watermark/AddDocument"
+	Watermark_Create_FullMethodName        = "/watermark.Watermark/Create"
 	Watermark_ServiceStatus_FullMethodName = "/watermark.Watermark/ServiceStatus"
 )
 
@@ -30,10 +27,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WatermarkClient interface {
-	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	Watermark(ctx context.Context, in *WatermarkRequest, opts ...grpc.CallOption) (*WatermarkResponse, error)
-	Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	AddDocument(ctx context.Context, in *AddDocumentRequest, opts ...grpc.CallOption) (*AddDocumentResponse, error)
+	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	ServiceStatus(ctx context.Context, in *ServiceStatusRequest, opts ...grpc.CallOption) (*ServiceStatusResponse, error)
 }
 
@@ -45,36 +39,9 @@ func NewWatermarkClient(cc grpc.ClientConnInterface) WatermarkClient {
 	return &watermarkClient{cc}
 }
 
-func (c *watermarkClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, Watermark_Get_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *watermarkClient) Watermark(ctx context.Context, in *WatermarkRequest, opts ...grpc.CallOption) (*WatermarkResponse, error) {
-	out := new(WatermarkResponse)
-	err := c.cc.Invoke(ctx, Watermark_Watermark_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *watermarkClient) Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, Watermark_Status_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *watermarkClient) AddDocument(ctx context.Context, in *AddDocumentRequest, opts ...grpc.CallOption) (*AddDocumentResponse, error) {
-	out := new(AddDocumentResponse)
-	err := c.cc.Invoke(ctx, Watermark_AddDocument_FullMethodName, in, out, opts...)
+func (c *watermarkClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error) {
+	out := new(CreateResponse)
+	err := c.cc.Invoke(ctx, Watermark_Create_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +61,7 @@ func (c *watermarkClient) ServiceStatus(ctx context.Context, in *ServiceStatusRe
 // All implementations must embed UnimplementedWatermarkServer
 // for forward compatibility
 type WatermarkServer interface {
-	Get(context.Context, *GetRequest) (*GetResponse, error)
-	Watermark(context.Context, *WatermarkRequest) (*WatermarkResponse, error)
-	Status(context.Context, *StatusRequest) (*StatusResponse, error)
-	AddDocument(context.Context, *AddDocumentRequest) (*AddDocumentResponse, error)
+	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	ServiceStatus(context.Context, *ServiceStatusRequest) (*ServiceStatusResponse, error)
 	mustEmbedUnimplementedWatermarkServer()
 }
@@ -106,17 +70,8 @@ type WatermarkServer interface {
 type UnimplementedWatermarkServer struct {
 }
 
-func (UnimplementedWatermarkServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
-}
-func (UnimplementedWatermarkServer) Watermark(context.Context, *WatermarkRequest) (*WatermarkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Watermark not implemented")
-}
-func (UnimplementedWatermarkServer) Status(context.Context, *StatusRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
-}
-func (UnimplementedWatermarkServer) AddDocument(context.Context, *AddDocumentRequest) (*AddDocumentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddDocument not implemented")
+func (UnimplementedWatermarkServer) Create(context.Context, *CreateRequest) (*CreateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
 func (UnimplementedWatermarkServer) ServiceStatus(context.Context, *ServiceStatusRequest) (*ServiceStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServiceStatus not implemented")
@@ -134,74 +89,20 @@ func RegisterWatermarkServer(s grpc.ServiceRegistrar, srv WatermarkServer) {
 	s.RegisterService(&Watermark_ServiceDesc, srv)
 }
 
-func _Watermark_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
+func _Watermark_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WatermarkServer).Get(ctx, in)
+		return srv.(WatermarkServer).Create(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Watermark_Get_FullMethodName,
+		FullMethod: Watermark_Create_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WatermarkServer).Get(ctx, req.(*GetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Watermark_Watermark_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(WatermarkRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WatermarkServer).Watermark(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Watermark_Watermark_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WatermarkServer).Watermark(ctx, req.(*WatermarkRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Watermark_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WatermarkServer).Status(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Watermark_Status_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WatermarkServer).Status(ctx, req.(*StatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Watermark_AddDocument_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddDocumentRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WatermarkServer).AddDocument(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Watermark_AddDocument_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WatermarkServer).AddDocument(ctx, req.(*AddDocumentRequest))
+		return srv.(WatermarkServer).Create(ctx, req.(*CreateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -232,20 +133,8 @@ var Watermark_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*WatermarkServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Get",
-			Handler:    _Watermark_Get_Handler,
-		},
-		{
-			MethodName: "Watermark",
-			Handler:    _Watermark_Watermark_Handler,
-		},
-		{
-			MethodName: "Status",
-			Handler:    _Watermark_Status_Handler,
-		},
-		{
-			MethodName: "AddDocument",
-			Handler:    _Watermark_AddDocument_Handler,
+			MethodName: "Create",
+			Handler:    _Watermark_Create_Handler,
 		},
 		{
 			MethodName: "ServiceStatus",

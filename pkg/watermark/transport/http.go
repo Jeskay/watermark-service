@@ -3,9 +3,15 @@ package transport
 import (
 	"context"
 	"encoding/json"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"net/http"
 	"os"
+	"regexp"
+	"watermark-service/internal"
 	"watermark-service/internal/util"
+	"watermark-service/pkg/watermark"
 	"watermark-service/pkg/watermark/endpoints"
 
 	httpkit "github.com/go-kit/kit/transport/http"
@@ -16,78 +22,54 @@ import (
 func NewHTTPHandler(ep endpoints.Set) http.Handler {
 	m := http.NewServeMux()
 
+	m.Handle("/create", httpkit.NewServer(
+		ep.CreateEndpoint,
+		decodeHTTPCreateRequest,
+		encodeCreateResponse,
+		httpkit.ServerBefore(extractImages),
+	))
 	m.Handle("/healthz", httpkit.NewServer(
 		ep.ServiceStatusEndpoint,
 		decodeHTTPServiceStatusRequest,
 		encodeResponse,
 	))
-	m.Handle("/status", httpkit.NewServer(
-		ep.StatusEndpoint,
-		decodeHTTPServiceStatusRequest,
-		encodeResponse,
-	))
-	m.Handle("/addDocument", httpkit.NewServer(
-		ep.AddDocumentEndpoint,
-		decodeHTTPAddDocumentRequest,
-		encodeResponse,
-	))
-	m.Handle("/get", httpkit.NewServer(
-		ep.GetEndpoint,
-		decodeHTTPGetRequest,
-		encodeResponse,
-	))
-	m.Handle("/watermark", httpkit.NewServer(
-		ep.WatermarkEndpoint,
-		decodeHTTPWatermarkRequest,
-		encodeResponse,
-	))
 	return m
-}
-
-func decodeHTTPGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req endpoints.GetRequest
-	if r.ContentLength == 0 {
-		logger.Log("Get request with empty body")
-		return req, nil
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
-}
-
-func decodeHTTPStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req endpoints.StatusRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
-}
-
-func decodeHTTPWatermarkRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req endpoints.WatermarkRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
-}
-
-func decodeHTTPAddDocumentRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req endpoints.AddDocumentRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
 }
 
 func decodeHTTPServiceStatusRequest(_ context.Context, _ *http.Request) (interface{}, error) {
 	var req endpoints.ServiceStatusRequest
 	return req, nil
+}
+
+func decodeHTTPCreateRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.CreateRequest
+	val := ctx.Value(watermark.ImageContextKey("image"))
+	if val == nil {
+		return nil, util.ErrInvalidArg
+	}
+	img, ok := val.(image.Image)
+	if !ok {
+		return nil, util.ErrInvalidArg
+	}
+	val = ctx.Value(watermark.LogoContextKey("logo"))
+	logo, ok := val.(image.Image)
+	if !ok {
+		return nil, util.ErrInvalidArg
+	}
+	req.Image = img
+	req.Logo = logo
+	req.Fill = r.FormValue("fill") == "true"
+	req.Text = r.FormValue("text")
+	req.Pos = internal.PositionFromString(r.FormValue("pos"))
+	return req, nil
+}
+
+func encodeCreateResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	if resp, ok := response.(endpoints.CreateResponse); ok {
+		w.Header().Set("Content-Type", "image/png")
+		return png.Encode(w, resp.Image)
+	}
+	return encodeResponse(ctx, w, response)
 }
 
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
@@ -111,6 +93,48 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"error": err.Error(),
 	})
+}
+
+func extractImages(ctx context.Context, r *http.Request) (newCtx context.Context) {
+	err := r.ParseMultipartForm(32 << 20)
+	if err != nil {
+		return ctx
+	}
+	img := getImageFromFile("image", r)
+	newCtx = context.WithValue(ctx, watermark.ImageContextKey("image"), img)
+	logo := getImageFromFile("logo", r)
+	newCtx = context.WithValue(newCtx, watermark.LogoContextKey("logo"), logo)
+	return
+}
+
+func getImageFromFile(name string, r *http.Request) image.Image {
+	var image image.Image
+	var regexp_result []string
+
+	res, _ := regexp.Compile(`.[0-9a-z]+$`)
+	file, header, err := r.FormFile(name)
+	if err != nil {
+		return nil
+	}
+	regexp_result = res.FindAllString(header.Filename, -1)
+	if len(regexp_result) == 0 {
+		return nil
+	}
+	switch regexp_result[0] {
+	case ".png":
+		image, err = png.Decode(file)
+		if err != nil {
+			image = nil
+		}
+	case ".jpg":
+		image, err = jpeg.Decode(file)
+		if err != nil {
+			image = nil
+		}
+	default:
+		image = nil
+	}
+	return image
 }
 
 var logger log.Logger

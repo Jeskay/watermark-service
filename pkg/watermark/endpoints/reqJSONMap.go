@@ -1,47 +1,26 @@
 package endpoints
 
-import "watermark-service/internal"
+import (
+	"image"
+	"watermark-service/internal"
+)
 
-type GetRequest struct {
-	Filters []internal.Filter `json:"filters,omitempty"`
+type CreateRequest struct {
+	Image image.Image       `json:"image"`
+	Logo  image.Image       `json:"logo"`
+	Text  string            `json:"text"`
+	Fill  bool              `json:"fill"`
+	Pos   internal.Position `json:"position"`
 }
 
-type GetResponse struct {
-	Documents []internal.Document `json:"documents"`
-	Err       string              `json:"err,omitempty"`
-}
-
-type StatusRequest struct {
-	TicketID int64 `json:"ticketID"`
-}
-
-type StatusResponse struct {
-	Status internal.Status `json:"status"`
-	Err    string          `json:"err,omitempty"`
-}
-
-type WatermarkRequest struct {
-	TicketID int64  `json:"ticketID"`
-	Mark     string `json:"mark"`
-}
-
-type WatermarkResponse struct {
-	Code int    `json:"code"`
-	Err  string `json:"err,omitempty"`
-}
-
-type AddDocumentRequest struct {
-	Document *internal.Document `json:"document"`
-}
-
-type AddDocumentResponse struct {
-	TicketID int64  `json:"ticketID"`
-	Err      string `json:"err,omitempty"`
+type CreateResponse struct {
+	Image image.Image `json:"image"`
+	Err   string      `json:"err,omitempty"`
 }
 
 type ServiceStatusRequest struct{}
 
 type ServiceStatusResponse struct {
-	Code int    `json:"status"`
+	Code int64  `json:"status"`
 	Err  string `json:"err,omitempty"`
 }

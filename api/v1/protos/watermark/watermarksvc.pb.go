@@ -20,75 +20,71 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type StatusResponse_Status int32
+type CreateRequest_Position int32
 
 const (
-	StatusResponse_PENDING     StatusResponse_Status = 0
-	StatusResponse_STARTED     StatusResponse_Status = 1
-	StatusResponse_IN_PROGRESS StatusResponse_Status = 2
-	StatusResponse_FINISHED    StatusResponse_Status = 3
-	StatusResponse_FAILED      StatusResponse_Status = 4
+	CreateRequest_left_top     CreateRequest_Position = 0
+	CreateRequest_left_bottom  CreateRequest_Position = 1
+	CreateRequest_right_top    CreateRequest_Position = 2
+	CreateRequest_right_bottom CreateRequest_Position = 3
 )
 
-// Enum value maps for StatusResponse_Status.
+// Enum value maps for CreateRequest_Position.
 var (
-	StatusResponse_Status_name = map[int32]string{
-		0: "PENDING",
-		1: "STARTED",
-		2: "IN_PROGRESS",
-		3: "FINISHED",
-		4: "FAILED",
+	CreateRequest_Position_name = map[int32]string{
+		0: "left_top",
+		1: "left_bottom",
+		2: "right_top",
+		3: "right_bottom",
 	}
-	StatusResponse_Status_value = map[string]int32{
-		"PENDING":     0,
-		"STARTED":     1,
-		"IN_PROGRESS": 2,
-		"FINISHED":    3,
-		"FAILED":      4,
+	CreateRequest_Position_value = map[string]int32{
+		"left_top":     0,
+		"left_bottom":  1,
+		"right_top":    2,
+		"right_bottom": 3,
 	}
 )
 
-func (x StatusResponse_Status) Enum() *StatusResponse_Status {
-	p := new(StatusResponse_Status)
+func (x CreateRequest_Position) Enum() *CreateRequest_Position {
+	p := new(CreateRequest_Position)
 	*p = x
 	return p
 }
 
-func (x StatusResponse_Status) String() string {
+func (x CreateRequest_Position) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (StatusResponse_Status) Descriptor() protoreflect.EnumDescriptor {
+func (CreateRequest_Position) Descriptor() protoreflect.EnumDescriptor {
 	return file_watermarksvc_proto_enumTypes[0].Descriptor()
 }
 
-func (StatusResponse_Status) Type() protoreflect.EnumType {
+func (CreateRequest_Position) Type() protoreflect.EnumType {
 	return &file_watermarksvc_proto_enumTypes[0]
 }
 
-func (x StatusResponse_Status) Number() protoreflect.EnumNumber {
+func (x CreateRequest_Position) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use StatusResponse_Status.Descriptor instead.
-func (StatusResponse_Status) EnumDescriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{4, 0}
+// Deprecated: Use CreateRequest_Position.Descriptor instead.
+func (CreateRequest_Position) EnumDescriptor() ([]byte, []int) {
+	return file_watermarksvc_proto_rawDescGZIP(), []int{0, 0}
 }
 
-type Document struct {
+type CreateRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Content   string `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
-	Title     string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Author    string `protobuf:"bytes,3,opt,name=author,proto3" json:"author,omitempty"`
-	Topic     string `protobuf:"bytes,4,opt,name=topic,proto3" json:"topic,omitempty"`
-	Watermark string `protobuf:"bytes,5,opt,name=watermark,proto3" json:"watermark,omitempty"`
+	Logo []byte                 `protobuf:"bytes,1,opt,name=logo,proto3" json:"logo,omitempty"`
+	Text string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	Fill bool                   `protobuf:"varint,3,opt,name=fill,proto3" json:"fill,omitempty"`
+	Pos  CreateRequest_Position `protobuf:"varint,4,opt,name=pos,proto3,enum=watermark.CreateRequest_Position" json:"pos,omitempty"`
 }
 
-func (x *Document) Reset() {
-	*x = Document{}
+func (x *CreateRequest) Reset() {
+	*x = CreateRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_watermarksvc_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -96,13 +92,13 @@ func (x *Document) Reset() {
 	}
 }
 
-func (x *Document) String() string {
+func (x *CreateRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Document) ProtoMessage() {}
+func (*CreateRequest) ProtoMessage() {}
 
-func (x *Document) ProtoReflect() protoreflect.Message {
+func (x *CreateRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_watermarksvc_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -114,56 +110,50 @@ func (x *Document) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Document.ProtoReflect.Descriptor instead.
-func (*Document) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateRequest.ProtoReflect.Descriptor instead.
+func (*CreateRequest) Descriptor() ([]byte, []int) {
 	return file_watermarksvc_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Document) GetContent() string {
+func (x *CreateRequest) GetLogo() []byte {
 	if x != nil {
-		return x.Content
+		return x.Logo
+	}
+	return nil
+}
+
+func (x *CreateRequest) GetText() string {
+	if x != nil {
+		return x.Text
 	}
 	return ""
 }
 
-func (x *Document) GetTitle() string {
+func (x *CreateRequest) GetFill() bool {
 	if x != nil {
-		return x.Title
+		return x.Fill
 	}
-	return ""
+	return false
 }
 
-func (x *Document) GetAuthor() string {
+func (x *CreateRequest) GetPos() CreateRequest_Position {
 	if x != nil {
-		return x.Author
+		return x.Pos
 	}
-	return ""
+	return CreateRequest_left_top
 }
 
-func (x *Document) GetTopic() string {
-	if x != nil {
-		return x.Topic
-	}
-	return ""
-}
-
-func (x *Document) GetWatermark() string {
-	if x != nil {
-		return x.Watermark
-	}
-	return ""
-}
-
-type GetRequest struct {
+type CreateResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Filters []*GetRequest_Filters `protobuf:"bytes,1,rep,name=filters,proto3" json:"filters,omitempty"`
+	Image []byte `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
+	Err   string `protobuf:"bytes,2,opt,name=err,proto3" json:"err,omitempty"`
 }
 
-func (x *GetRequest) Reset() {
-	*x = GetRequest{}
+func (x *CreateResponse) Reset() {
+	*x = CreateResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_watermarksvc_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -171,13 +161,13 @@ func (x *GetRequest) Reset() {
 	}
 }
 
-func (x *GetRequest) String() string {
+func (x *CreateResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetRequest) ProtoMessage() {}
+func (*CreateResponse) ProtoMessage() {}
 
-func (x *GetRequest) ProtoReflect() protoreflect.Message {
+func (x *CreateResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_watermarksvc_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -189,381 +179,19 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
-func (*GetRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateResponse.ProtoReflect.Descriptor instead.
+func (*CreateResponse) Descriptor() ([]byte, []int) {
 	return file_watermarksvc_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GetRequest) GetFilters() []*GetRequest_Filters {
+func (x *CreateResponse) GetImage() []byte {
 	if x != nil {
-		return x.Filters
+		return x.Image
 	}
 	return nil
 }
 
-type GetResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Documents []*Document `protobuf:"bytes,1,rep,name=documents,proto3" json:"documents,omitempty"`
-	Err       string      `protobuf:"bytes,2,opt,name=err,proto3" json:"err,omitempty"`
-}
-
-func (x *GetResponse) Reset() {
-	*x = GetResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetResponse) ProtoMessage() {}
-
-func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
-func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *GetResponse) GetDocuments() []*Document {
-	if x != nil {
-		return x.Documents
-	}
-	return nil
-}
-
-func (x *GetResponse) GetErr() string {
-	if x != nil {
-		return x.Err
-	}
-	return ""
-}
-
-type StatusRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	TicketID int64 `protobuf:"varint,1,opt,name=ticketID,proto3" json:"ticketID,omitempty"`
-}
-
-func (x *StatusRequest) Reset() {
-	*x = StatusRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *StatusRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StatusRequest) ProtoMessage() {}
-
-func (x *StatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StatusRequest.ProtoReflect.Descriptor instead.
-func (*StatusRequest) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *StatusRequest) GetTicketID() int64 {
-	if x != nil {
-		return x.TicketID
-	}
-	return 0
-}
-
-type StatusResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Status StatusResponse_Status `protobuf:"varint,1,opt,name=status,proto3,enum=watermark.StatusResponse_Status" json:"status,omitempty"`
-	Err    string                `protobuf:"bytes,2,opt,name=err,proto3" json:"err,omitempty"`
-}
-
-func (x *StatusResponse) Reset() {
-	*x = StatusResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *StatusResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StatusResponse) ProtoMessage() {}
-
-func (x *StatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StatusResponse.ProtoReflect.Descriptor instead.
-func (*StatusResponse) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *StatusResponse) GetStatus() StatusResponse_Status {
-	if x != nil {
-		return x.Status
-	}
-	return StatusResponse_PENDING
-}
-
-func (x *StatusResponse) GetErr() string {
-	if x != nil {
-		return x.Err
-	}
-	return ""
-}
-
-type WatermarkRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	TicketID int64  `protobuf:"varint,1,opt,name=ticketID,proto3" json:"ticketID,omitempty"`
-	Mark     string `protobuf:"bytes,2,opt,name=mark,proto3" json:"mark,omitempty"`
-}
-
-func (x *WatermarkRequest) Reset() {
-	*x = WatermarkRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *WatermarkRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*WatermarkRequest) ProtoMessage() {}
-
-func (x *WatermarkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use WatermarkRequest.ProtoReflect.Descriptor instead.
-func (*WatermarkRequest) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *WatermarkRequest) GetTicketID() int64 {
-	if x != nil {
-		return x.TicketID
-	}
-	return 0
-}
-
-func (x *WatermarkRequest) GetMark() string {
-	if x != nil {
-		return x.Mark
-	}
-	return ""
-}
-
-type WatermarkResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Code int64  `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
-	Err  string `protobuf:"bytes,2,opt,name=err,proto3" json:"err,omitempty"`
-}
-
-func (x *WatermarkResponse) Reset() {
-	*x = WatermarkResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *WatermarkResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*WatermarkResponse) ProtoMessage() {}
-
-func (x *WatermarkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use WatermarkResponse.ProtoReflect.Descriptor instead.
-func (*WatermarkResponse) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *WatermarkResponse) GetCode() int64 {
-	if x != nil {
-		return x.Code
-	}
-	return 0
-}
-
-func (x *WatermarkResponse) GetErr() string {
-	if x != nil {
-		return x.Err
-	}
-	return ""
-}
-
-type AddDocumentRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Document *Document `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
-}
-
-func (x *AddDocumentRequest) Reset() {
-	*x = AddDocumentRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AddDocumentRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddDocumentRequest) ProtoMessage() {}
-
-func (x *AddDocumentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddDocumentRequest.ProtoReflect.Descriptor instead.
-func (*AddDocumentRequest) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{7}
-}
-
-func (x *AddDocumentRequest) GetDocument() *Document {
-	if x != nil {
-		return x.Document
-	}
-	return nil
-}
-
-type AddDocumentResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	TicketID int64  `protobuf:"varint,1,opt,name=ticketID,proto3" json:"ticketID,omitempty"`
-	Err      string `protobuf:"bytes,2,opt,name=err,proto3" json:"err,omitempty"`
-}
-
-func (x *AddDocumentResponse) Reset() {
-	*x = AddDocumentResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *AddDocumentResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddDocumentResponse) ProtoMessage() {}
-
-func (x *AddDocumentResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddDocumentResponse.ProtoReflect.Descriptor instead.
-func (*AddDocumentResponse) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *AddDocumentResponse) GetTicketID() int64 {
-	if x != nil {
-		return x.TicketID
-	}
-	return 0
-}
-
-func (x *AddDocumentResponse) GetErr() string {
+func (x *CreateResponse) GetErr() string {
 	if x != nil {
 		return x.Err
 	}
@@ -579,7 +207,7 @@ type ServiceStatusRequest struct {
 func (x *ServiceStatusRequest) Reset() {
 	*x = ServiceStatusRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[9]
+		mi := &file_watermarksvc_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -592,7 +220,7 @@ func (x *ServiceStatusRequest) String() string {
 func (*ServiceStatusRequest) ProtoMessage() {}
 
 func (x *ServiceStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[9]
+	mi := &file_watermarksvc_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -605,7 +233,7 @@ func (x *ServiceStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceStatusRequest.ProtoReflect.Descriptor instead.
 func (*ServiceStatusRequest) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{9}
+	return file_watermarksvc_proto_rawDescGZIP(), []int{2}
 }
 
 type ServiceStatusResponse struct {
@@ -620,7 +248,7 @@ type ServiceStatusResponse struct {
 func (x *ServiceStatusResponse) Reset() {
 	*x = ServiceStatusResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[10]
+		mi := &file_watermarksvc_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -633,7 +261,7 @@ func (x *ServiceStatusResponse) String() string {
 func (*ServiceStatusResponse) ProtoMessage() {}
 
 func (x *ServiceStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[10]
+	mi := &file_watermarksvc_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -646,7 +274,7 @@ func (x *ServiceStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceStatusResponse.ProtoReflect.Descriptor instead.
 func (*ServiceStatusResponse) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{10}
+	return file_watermarksvc_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ServiceStatusResponse) GetCode() int64 {
@@ -663,149 +291,45 @@ func (x *ServiceStatusResponse) GetErr() string {
 	return ""
 }
 
-type GetRequest_Filters struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Key   string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-}
-
-func (x *GetRequest_Filters) Reset() {
-	*x = GetRequest_Filters{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_watermarksvc_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetRequest_Filters) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetRequest_Filters) ProtoMessage() {}
-
-func (x *GetRequest_Filters) ProtoReflect() protoreflect.Message {
-	mi := &file_watermarksvc_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetRequest_Filters.ProtoReflect.Descriptor instead.
-func (*GetRequest_Filters) Descriptor() ([]byte, []int) {
-	return file_watermarksvc_proto_rawDescGZIP(), []int{1, 0}
-}
-
-func (x *GetRequest_Filters) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *GetRequest_Filters) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
 var File_watermarksvc_proto protoreflect.FileDescriptor
 
 var file_watermarksvc_proto_rawDesc = []byte{
 	0x0a, 0x12, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x73, 0x76, 0x63, 0x2e, 0x70,
 	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x09, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x22,
-	0x86, 0x01, 0x0a, 0x08, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x12, 0x18, 0x0a, 0x07,
-	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63,
-	0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x12, 0x16, 0x0a, 0x06,
-	0x61, 0x75, 0x74, 0x68, 0x6f, 0x72, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x61, 0x75,
-	0x74, 0x68, 0x6f, 0x72, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x70, 0x69, 0x63, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x70, 0x69, 0x63, 0x12, 0x1c, 0x0a, 0x09, 0x77, 0x61,
-	0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x77,
-	0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x22, 0x78, 0x0a, 0x0a, 0x47, 0x65, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x37, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72,
-	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d,
-	0x61, 0x72, 0x6b, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x46,
-	0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x52, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x1a,
-	0x31, 0x0a, 0x07, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65,
-	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05,
-	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c,
-	0x75, 0x65, 0x22, 0x52, 0x0a, 0x0b, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x31, 0x0a, 0x09, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x18, 0x01,
-	0x20, 0x03, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b,
-	0x2e, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x09, 0x64, 0x6f, 0x63, 0x75, 0x6d,
-	0x65, 0x6e, 0x74, 0x73, 0x12, 0x10, 0x0a, 0x03, 0x65, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x03, 0x65, 0x72, 0x72, 0x22, 0x2b, 0x0a, 0x0d, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x74, 0x69, 0x63, 0x6b, 0x65,
-	0x74, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x74, 0x69, 0x63, 0x6b, 0x65,
-	0x74, 0x49, 0x44, 0x22, 0xab, 0x01, 0x0a, 0x0e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x20, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61,
-	0x72, 0x6b, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x12, 0x10, 0x0a, 0x03, 0x65, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x65,
-	0x72, 0x72, 0x22, 0x4d, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x0b, 0x0a, 0x07,
-	0x50, 0x45, 0x4e, 0x44, 0x49, 0x4e, 0x47, 0x10, 0x00, 0x12, 0x0b, 0x0a, 0x07, 0x53, 0x54, 0x41,
-	0x52, 0x54, 0x45, 0x44, 0x10, 0x01, 0x12, 0x0f, 0x0a, 0x0b, 0x49, 0x4e, 0x5f, 0x50, 0x52, 0x4f,
-	0x47, 0x52, 0x45, 0x53, 0x53, 0x10, 0x02, 0x12, 0x0c, 0x0a, 0x08, 0x46, 0x49, 0x4e, 0x49, 0x53,
-	0x48, 0x45, 0x44, 0x10, 0x03, 0x12, 0x0a, 0x0a, 0x06, 0x46, 0x41, 0x49, 0x4c, 0x45, 0x44, 0x10,
-	0x04, 0x22, 0x42, 0x0a, 0x10, 0x57, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x74, 0x69, 0x63, 0x6b, 0x65, 0x74, 0x49,
-	0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x74, 0x69, 0x63, 0x6b, 0x65, 0x74, 0x49,
-	0x44, 0x12, 0x12, 0x0a, 0x04, 0x6d, 0x61, 0x72, 0x6b, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x04, 0x6d, 0x61, 0x72, 0x6b, 0x22, 0x39, 0x0a, 0x11, 0x57, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61,
-	0x72, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x63, 0x6f,
-	0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x12, 0x10,
-	0x0a, 0x03, 0x65, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x65, 0x72, 0x72,
-	0x22, 0x45, 0x0a, 0x12, 0x41, 0x64, 0x64, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2f, 0x0a, 0x08, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65,
-	0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72,
-	0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x08, 0x64,
-	0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x22, 0x43, 0x0a, 0x13, 0x41, 0x64, 0x64, 0x44, 0x6f,
-	0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x1a,
-	0x0a, 0x08, 0x74, 0x69, 0x63, 0x6b, 0x65, 0x74, 0x49, 0x44, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03,
-	0x52, 0x08, 0x74, 0x69, 0x63, 0x6b, 0x65, 0x74, 0x49, 0x44, 0x12, 0x10, 0x0a, 0x03, 0x65, 0x72,
-	0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x65, 0x72, 0x72, 0x22, 0x16, 0x0a, 0x14,
-	0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x22, 0x3d, 0x0a, 0x15, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a,
-	0x04, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x63, 0x6f, 0x64,
-	0x65, 0x12, 0x10, 0x0a, 0x03, 0x65, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03,
-	0x65, 0x72, 0x72, 0x32, 0xf4, 0x02, 0x0a, 0x09, 0x57, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72,
-	0x6b, 0x12, 0x36, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x15, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72,
-	0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x16, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x47, 0x65, 0x74, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x48, 0x0a, 0x09, 0x57, 0x61, 0x74,
-	0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x12, 0x1b, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61,
-	0x72, 0x6b, 0x2e, 0x57, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x1c, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e,
-	0x57, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x12, 0x3f, 0x0a, 0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x18, 0x2e,
-	0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d,
-	0x61, 0x72, 0x6b, 0x2e, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x00, 0x12, 0x4e, 0x0a, 0x0b, 0x41, 0x64, 0x64, 0x44, 0x6f, 0x63, 0x75, 0x6d,
-	0x65, 0x6e, 0x74, 0x12, 0x1d, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e,
-	0x41, 0x64, 0x64, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x41,
-	0x64, 0x64, 0x44, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0x00, 0x12, 0x54, 0x0a, 0x0d, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53,
-	0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x1f, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72,
-	0x6b, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61,
-	0x72, 0x6b, 0x2e, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x0d, 0x5a, 0x0b, 0x2e, 0x2f,
-	0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0xcc, 0x01, 0x0a, 0x0d, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x12, 0x0a, 0x04, 0x6c, 0x6f, 0x67, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52,
+	0x04, 0x6c, 0x6f, 0x67, 0x6f, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x65, 0x78, 0x74, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x78, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x66, 0x69, 0x6c,
+	0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x66, 0x69, 0x6c, 0x6c, 0x12, 0x33, 0x0a,
+	0x03, 0x70, 0x6f, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x21, 0x2e, 0x77, 0x61, 0x74,
+	0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x2e, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x03, 0x70,
+	0x6f, 0x73, 0x22, 0x4a, 0x0a, 0x08, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x0c,
+	0x0a, 0x08, 0x6c, 0x65, 0x66, 0x74, 0x5f, 0x74, 0x6f, 0x70, 0x10, 0x00, 0x12, 0x0f, 0x0a, 0x0b,
+	0x6c, 0x65, 0x66, 0x74, 0x5f, 0x62, 0x6f, 0x74, 0x74, 0x6f, 0x6d, 0x10, 0x01, 0x12, 0x0d, 0x0a,
+	0x09, 0x72, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x74, 0x6f, 0x70, 0x10, 0x02, 0x12, 0x10, 0x0a, 0x0c,
+	0x72, 0x69, 0x67, 0x68, 0x74, 0x5f, 0x62, 0x6f, 0x74, 0x74, 0x6f, 0x6d, 0x10, 0x03, 0x22, 0x38,
+	0x0a, 0x0e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x14, 0x0a, 0x05, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52,
+	0x05, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x12, 0x10, 0x0a, 0x03, 0x65, 0x72, 0x72, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x65, 0x72, 0x72, 0x22, 0x16, 0x0a, 0x14, 0x53, 0x65, 0x72, 0x76,
+	0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x22, 0x3d, 0x0a, 0x15, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75,
+	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x63, 0x6f, 0x64,
+	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x12, 0x10, 0x0a,
+	0x03, 0x65, 0x72, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x65, 0x72, 0x72, 0x32,
+	0xa2, 0x01, 0x0a, 0x09, 0x57, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x12, 0x3f, 0x0a,
+	0x06, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x12, 0x18, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d,
+	0x61, 0x72, 0x6b, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x19, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x43, 0x72,
+	0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x54,
+	0x0a, 0x0d, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12,
+	0x1f, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x53, 0x65, 0x72, 0x76,
+	0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x20, 0x2e, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d, 0x61, 0x72, 0x6b, 0x2e, 0x53, 0x65, 0x72,
+	0x76, 0x69, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x42, 0x0d, 0x5a, 0x0b, 0x2e, 0x2f, 0x77, 0x61, 0x74, 0x65, 0x72, 0x6d,
+	0x61, 0x72, 0x6b, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -821,42 +345,25 @@ func file_watermarksvc_proto_rawDescGZIP() []byte {
 }
 
 var file_watermarksvc_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_watermarksvc_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_watermarksvc_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_watermarksvc_proto_goTypes = []interface{}{
-	(StatusResponse_Status)(0),    // 0: watermark.StatusResponse.Status
-	(*Document)(nil),              // 1: watermark.Document
-	(*GetRequest)(nil),            // 2: watermark.GetRequest
-	(*GetResponse)(nil),           // 3: watermark.GetResponse
-	(*StatusRequest)(nil),         // 4: watermark.StatusRequest
-	(*StatusResponse)(nil),        // 5: watermark.StatusResponse
-	(*WatermarkRequest)(nil),      // 6: watermark.WatermarkRequest
-	(*WatermarkResponse)(nil),     // 7: watermark.WatermarkResponse
-	(*AddDocumentRequest)(nil),    // 8: watermark.AddDocumentRequest
-	(*AddDocumentResponse)(nil),   // 9: watermark.AddDocumentResponse
-	(*ServiceStatusRequest)(nil),  // 10: watermark.ServiceStatusRequest
-	(*ServiceStatusResponse)(nil), // 11: watermark.ServiceStatusResponse
-	(*GetRequest_Filters)(nil),    // 12: watermark.GetRequest.Filters
+	(CreateRequest_Position)(0),   // 0: watermark.CreateRequest.Position
+	(*CreateRequest)(nil),         // 1: watermark.CreateRequest
+	(*CreateResponse)(nil),        // 2: watermark.CreateResponse
+	(*ServiceStatusRequest)(nil),  // 3: watermark.ServiceStatusRequest
+	(*ServiceStatusResponse)(nil), // 4: watermark.ServiceStatusResponse
 }
 var file_watermarksvc_proto_depIdxs = []int32{
-	12, // 0: watermark.GetRequest.filters:type_name -> watermark.GetRequest.Filters
-	1,  // 1: watermark.GetResponse.documents:type_name -> watermark.Document
-	0,  // 2: watermark.StatusResponse.status:type_name -> watermark.StatusResponse.Status
-	1,  // 3: watermark.AddDocumentRequest.document:type_name -> watermark.Document
-	2,  // 4: watermark.Watermark.Get:input_type -> watermark.GetRequest
-	6,  // 5: watermark.Watermark.Watermark:input_type -> watermark.WatermarkRequest
-	4,  // 6: watermark.Watermark.Status:input_type -> watermark.StatusRequest
-	8,  // 7: watermark.Watermark.AddDocument:input_type -> watermark.AddDocumentRequest
-	10, // 8: watermark.Watermark.ServiceStatus:input_type -> watermark.ServiceStatusRequest
-	3,  // 9: watermark.Watermark.Get:output_type -> watermark.GetResponse
-	7,  // 10: watermark.Watermark.Watermark:output_type -> watermark.WatermarkResponse
-	5,  // 11: watermark.Watermark.Status:output_type -> watermark.StatusResponse
-	9,  // 12: watermark.Watermark.AddDocument:output_type -> watermark.AddDocumentResponse
-	11, // 13: watermark.Watermark.ServiceStatus:output_type -> watermark.ServiceStatusResponse
-	9,  // [9:14] is the sub-list for method output_type
-	4,  // [4:9] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	0, // 0: watermark.CreateRequest.pos:type_name -> watermark.CreateRequest.Position
+	1, // 1: watermark.Watermark.Create:input_type -> watermark.CreateRequest
+	3, // 2: watermark.Watermark.ServiceStatus:input_type -> watermark.ServiceStatusRequest
+	2, // 3: watermark.Watermark.Create:output_type -> watermark.CreateResponse
+	4, // 4: watermark.Watermark.ServiceStatus:output_type -> watermark.ServiceStatusResponse
+	3, // [3:5] is the sub-list for method output_type
+	1, // [1:3] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_watermarksvc_proto_init() }
@@ -866,7 +373,7 @@ func file_watermarksvc_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_watermarksvc_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Document); i {
+			switch v := v.(*CreateRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -878,7 +385,7 @@ func file_watermarksvc_proto_init() {
 			}
 		}
 		file_watermarksvc_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRequest); i {
+			switch v := v.(*CreateResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -890,90 +397,6 @@ func file_watermarksvc_proto_init() {
 			}
 		}
 		file_watermarksvc_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StatusRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StatusResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WatermarkRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*WatermarkResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddDocumentRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AddDocumentResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServiceStatusRequest); i {
 			case 0:
 				return &v.state
@@ -985,20 +408,8 @@ func file_watermarksvc_proto_init() {
 				return nil
 			}
 		}
-		file_watermarksvc_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_watermarksvc_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ServiceStatusResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_watermarksvc_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetRequest_Filters); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1016,7 +427,7 @@ func file_watermarksvc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_watermarksvc_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
