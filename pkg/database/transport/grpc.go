@@ -4,6 +4,7 @@ import (
 	"context"
 	"watermark-service/api/v1/protos/db"
 	"watermark-service/internal"
+	"watermark-service/internal/util"
 	"watermark-service/pkg/database/endpoints"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
@@ -11,7 +12,6 @@ import (
 
 type grpcServer struct {
 	get           grpckit.Handler
-	update        grpckit.Handler
 	add           grpckit.Handler
 	remove        grpckit.Handler
 	serviceStatus grpckit.Handler
@@ -21,7 +21,6 @@ type grpcServer struct {
 func NewGRPCServer(ep endpoints.Set) db.DatabaseServer {
 	return &grpcServer{
 		get:           grpckit.NewServer(ep.GetEndpoint, decodeGRPCGetRequest, encodeGRPCGetResponse),
-		update:        grpckit.NewServer(ep.UpdateEndpoint, decodeGRPCUpdateRequest, encodeGRPCUpdateResponse),
 		add:           grpckit.NewServer(ep.AddEndpoint, decodeGRPCAddRequest, encodeGRPCAddResponse),
 		remove:        grpckit.NewServer(ep.RemoveEndpoint, decodeGRPCRemoveRequest, encodeGRPCRemoveResponse),
 		serviceStatus: grpckit.NewServer(ep.ServiceStatusEndpoint, decodeGRPCServiceStatusRequest, encodeGRPCServiceStatusResponse),
@@ -34,14 +33,6 @@ func (g *grpcServer) Get(ctx context.Context, r *db.GetRequest) (*db.GetResponse
 		return nil, err
 	}
 	return resp.(*db.GetResponse), nil
-}
-
-func (g *grpcServer) Update(ctx context.Context, r *db.UpdateRequest) (*db.UpdateResponse, error) {
-	_, resp, err := g.update.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*db.UpdateResponse), nil
 }
 
 func (g *grpcServer) Add(ctx context.Context, r *db.AddRequest) (*db.AddResponse, error) {
@@ -77,18 +68,6 @@ func decodeGRPCGetRequest(_ context.Context, grpcReq interface{}) (interface{}, 
 	return endpoints.GetRequest{Filters: filters}, nil
 }
 
-func decodeGRPCUpdateRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*db.UpdateRequest)
-	doc := &internal.Document{
-		Content:   req.Document.GetContent(),
-		Title:     req.Document.GetTitle(),
-		Author:    req.Document.GetAuthor(),
-		Topic:     req.Document.GetTopic(),
-		Watermark: req.Document.GetWatermark(),
-	}
-	return endpoints.UpdateRequest{TicketID: req.TicketID, Document: doc}, nil
-}
-
 func decodeGRPCRemoveRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*db.RemoveRequest)
 	return endpoints.RemoveRequest{TicketID: req.TicketID}, nil
@@ -96,14 +75,13 @@ func decodeGRPCRemoveRequest(_ context.Context, grpcReq interface{}) (interface{
 
 func decodeGRPCAddRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*db.AddRequest)
-	doc := &internal.Document{
-		Content:   req.Document.GetContent(),
-		Title:     req.Document.GetTitle(),
-		Author:    req.Document.GetAuthor(),
-		Topic:     req.Document.GetTopic(),
-		Watermark: req.Document.GetWatermark(),
-	}
-	return endpoints.AddRequest{Document: doc}, nil
+	return endpoints.AddRequest{
+		Logo:  util.ByteToImage(req.Logo.Data, req.Logo.Type),
+		Image: util.ByteToImage(req.Image.Data, req.Image.Type),
+		Text:  req.Text,
+		Fill:  req.Fill,
+		Pos:   internal.PositionFromString(req.Pos.String()),
+	}, nil
 }
 
 func decodeGRPCServiceStatusRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -111,24 +89,26 @@ func decodeGRPCServiceStatusRequest(_ context.Context, grpcReq interface{}) (int
 }
 
 func encodeGRPCGetResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
-	response := grpcResponse.(*db.GetResponse)
-	var docs []internal.Document
+	response := grpcResponse.(endpoints.GetResponse)
+	var docs []*db.Document
 	for _, d := range response.Documents {
-		doc := internal.Document{
-			Content:   d.GetContent(),
-			Title:     d.GetTitle(),
-			Author:    d.GetAuthor(),
-			Topic:     d.GetAuthor(),
-			Watermark: d.GetWatermark(),
+		ticket_id, err := d.ID.MarshalBinary()
+		if err != nil {
+			return nil, err
 		}
-		docs = append(docs, doc)
+		author_id, err := d.AuthorId.MarshalBinary()
+		if err != nil {
+			return nil, err
+		}
+		doc := db.Document{
+			TicketId: ticket_id,
+			AuthorId: author_id,
+			Title:    d.Title,
+			ImageUrl: d.ImageUrl,
+		}
+		docs = append(docs, &doc)
 	}
-	return endpoints.GetResponse{Documents: docs, Err: response.GetErr()}, nil
-}
-
-func encodeGRPCUpdateResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
-	response := grpcResponse.(endpoints.UpdateResponse)
-	return &db.UpdateResponse{Code: int64(response.Code), Err: response.Err}, nil
+	return &db.GetResponse{Documents: docs, Err: response.Err}, nil
 }
 
 func encodeGRPCRemoveResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {

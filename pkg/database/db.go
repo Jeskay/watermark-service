@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"image"
 	"net/http"
 	"watermark-service/internal"
 	"watermark-service/internal/database"
@@ -17,13 +18,8 @@ func NewService(dbORM *gorm.DB) *dbService {
 	return &dbService{orm: dbORM}
 }
 
-func (d *dbService) Add(_ context.Context, doc *internal.Document) (int64, error) {
-	document := database.NewDocument(doc)
-	result := d.orm.Model(&database.Document{}).Create(document)
-	if result.Error != nil {
-		return -1, result.Error
-	}
-	return document.TicketID, nil
+func (d *dbService) Add(_ context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
+	return "", nil
 }
 
 func (d *dbService) Get(_ context.Context, filters ...internal.Filter) ([]internal.Document, error) {
@@ -32,14 +28,7 @@ func (d *dbService) Get(_ context.Context, filters ...internal.Filter) ([]intern
 	return result, nil
 }
 
-func (d *dbService) Update(_ context.Context, ticketId int64, doc *internal.Document) (int, error) {
-	document := database.NewDocument(doc)
-	document.TicketID = ticketId
-	d.orm.Model(&database.Document{}).Save(document)
-	return http.StatusOK, nil
-}
-
-func (d *dbService) Remove(_ context.Context, ticketId int64) (int, error) {
+func (d *dbService) Remove(_ context.Context, ticketId string) (int, error) {
 	d.orm.Delete(&database.Document{}, ticketId)
 	return http.StatusOK, nil
 }

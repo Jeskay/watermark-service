@@ -2,22 +2,22 @@ syntax = "proto3";
 
 package db;
 
-option go_package = "./db";
+option go_package = "watermark-service/api/v1/protos/db";
+
+import "watermark/watermarksvc.proto";
 
 service database {
     rpc Get (GetRequest) returns (GetResponse) {}
     rpc Remove (RemoveRequest) returns (RemoveResponse) {}
-    rpc Update (UpdateRequest) returns (UpdateResponse) {}
     rpc Add (AddRequest) returns (AddResponse) {}
     rpc ServiceStatus (ServiceStatusRequest) returns (ServiceStatusResponse) {}
 }
 
 message Document {
-    string content = 1;
-    string title = 2;
-    string author = 3;
-    string topic = 4;
-    string watermark = 5;
+    bytes author_id = 1;
+    bytes ticket_id = 2;
+    string title = 3;
+    string image_url = 4;
 }
 
 message GetRequest {
@@ -33,18 +33,8 @@ message GetResponse {
     string err = 2;
 }
 
-message UpdateRequest {
-    int64 ticketID = 1;
-    Document document = 2;
-}
-
-message UpdateResponse {
-    int64 code = 1;
-    string err = 2;
-}
-
 message RemoveRequest {
-    int64 ticketID = 1;
+    string ticketID = 1;
 }
 
 message RemoveResponse {
@@ -53,11 +43,15 @@ message RemoveResponse {
 }
 
 message AddRequest {
-    Document document = 1;
+    optional watermark.Image logo = 1;
+    watermark.Image image = 2;
+    string text = 3;
+    bool fill = 4;
+    watermark.Position pos = 5;
 }
 
 message AddResponse {
-    int64 ticketID = 1;
+    string ticketID = 1;
     string err = 2;
 }
 

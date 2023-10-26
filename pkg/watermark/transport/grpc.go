@@ -1,8 +1,13 @@
 package transport
 
 import (
+	"bytes"
 	"context"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"watermark-service/api/v1/protos/watermark"
+	"watermark-service/internal"
 	"watermark-service/pkg/watermark/endpoints"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
@@ -46,8 +51,15 @@ func (g *grpcServer) ServiceStatus(ctx context.Context, r *watermark.ServiceStat
 }
 
 func decodeGRPCCreateRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	var Logo image.Image
 	req := grpcReq.(*watermark.CreateRequest)
-	return endpoints.CreateRequest{Logo: nil, Text: req.Text, Fill: req.Fill}, nil
+	img := req.GetImage()
+	logo := req.GetLogo()
+	if logo != nil {
+		Logo = getImageFromByte(logo.Data, logo.Type)
+	}
+	pos := internal.PositionFromString(req.Pos.String())
+	return endpoints.CreateRequest{Image: getImageFromByte(img.Data, img.Type), Logo: Logo, Text: req.Text, Fill: req.Fill, Pos: pos}, nil
 }
 
 func decodeGRPCServiceStatusRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
@@ -55,11 +67,32 @@ func decodeGRPCServiceStatusRequest(_ context.Context, grpcReq interface{}) (int
 }
 
 func encodeGRPCCreateResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
-	response := grpcResp.(*watermark.CreateResponse)
-	return endpoints.CreateResponse{Image: nil, Err: response.GetErr()}, nil
+	response := grpcResp.(endpoints.CreateResponse)
+	buf := new(bytes.Buffer)
+	png.Encode(buf, response.Image)
+	return &watermark.CreateResponse{Image: buf.Bytes(), Err: response.Err}, nil
 }
 
 func encodeGRPCServiceStatusResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
 	response := grpcResp.(*watermark.ServiceStatusResponse)
 	return endpoints.ServiceStatusResponse{Code: response.GetCode(), Err: response.GetErr()}, nil
+}
+
+func getImageFromByte(image []byte, encoding string) image.Image {
+	switch encoding {
+	case ".png":
+		img, err := png.Decode(bytes.NewReader(image))
+		if err != nil {
+			return nil
+		}
+		return img
+	case ".jpg":
+		img, err := jpeg.Decode(bytes.NewReader(image))
+		if err != nil {
+			return nil
+		}
+		return img
+	default:
+		return nil
+	}
 }

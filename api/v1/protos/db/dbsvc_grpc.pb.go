@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.24.1
-// source: dbsvc.proto
+// source: db/dbsvc.proto
 
 package db
 
@@ -21,7 +21,6 @@ const _ = grpc.SupportPackageIsVersion7
 const (
 	Database_Get_FullMethodName           = "/db.database/Get"
 	Database_Remove_FullMethodName        = "/db.database/Remove"
-	Database_Update_FullMethodName        = "/db.database/Update"
 	Database_Add_FullMethodName           = "/db.database/Add"
 	Database_ServiceStatus_FullMethodName = "/db.database/ServiceStatus"
 )
@@ -32,7 +31,6 @@ const (
 type DatabaseClient interface {
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error)
-	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	ServiceStatus(ctx context.Context, in *ServiceStatusRequest, opts ...grpc.CallOption) (*ServiceStatusResponse, error)
 }
@@ -63,15 +61,6 @@ func (c *databaseClient) Remove(ctx context.Context, in *RemoveRequest, opts ...
 	return out, nil
 }
 
-func (c *databaseClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
-	out := new(UpdateResponse)
-	err := c.cc.Invoke(ctx, Database_Update_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *databaseClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
 	out := new(AddResponse)
 	err := c.cc.Invoke(ctx, Database_Add_FullMethodName, in, out, opts...)
@@ -96,7 +85,6 @@ func (c *databaseClient) ServiceStatus(ctx context.Context, in *ServiceStatusReq
 type DatabaseServer interface {
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	Remove(context.Context, *RemoveRequest) (*RemoveResponse, error)
-	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	ServiceStatus(context.Context, *ServiceStatusRequest) (*ServiceStatusResponse, error)
 	mustEmbedUnimplementedDatabaseServer()
@@ -111,9 +99,6 @@ func (UnimplementedDatabaseServer) Get(context.Context, *GetRequest) (*GetRespon
 }
 func (UnimplementedDatabaseServer) Remove(context.Context, *RemoveRequest) (*RemoveResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
-}
-func (UnimplementedDatabaseServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedDatabaseServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
@@ -170,24 +155,6 @@ func _Database_Remove_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Database_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(DatabaseServer).Update(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Database_Update_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DatabaseServer).Update(ctx, req.(*UpdateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Database_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddRequest)
 	if err := dec(in); err != nil {
@@ -240,10 +207,6 @@ var Database_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Database_Remove_Handler,
 		},
 		{
-			MethodName: "Update",
-			Handler:    _Database_Update_Handler,
-		},
-		{
 			MethodName: "Add",
 			Handler:    _Database_Add_Handler,
 		},
@@ -253,5 +216,5 @@ var Database_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "dbsvc.proto",
+	Metadata: "db/dbsvc.proto",
 }

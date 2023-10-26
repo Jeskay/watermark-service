@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.24.1
-// source: watermarksvc.proto
+// source: watermark/watermarksvc.proto
 
 package watermark
 
@@ -142,5 +142,5 @@ var Watermark_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "watermarksvc.proto",
+	Metadata: "watermark/watermarksvc.proto",
 }

@@ -1,11 +1,14 @@
 package internal
 
+import (
+	uuid "github.com/google/uuid"
+)
+
 type Document struct {
-	Content   string `json:"content"`
-	Title     string `json:"title"`
-	Author    string `json:"author"`
-	Topic     string `json:"topic"`
-	Watermark string `json:"watermark"`
+	ID       uuid.UUID `json:"id"`
+	AuthorId uuid.UUID `json:"author_id"`
+	Title    string    `json:"title"`
+	ImageUrl string    `json:"image_url"`
 }
 
 type Filter struct {

@@ -3,7 +3,7 @@ package endpoints
 import (
 	"context"
 	"errors"
-	"net/http"
+	"image"
 	"os"
 	"watermark-service/internal"
 	"watermark-service/pkg/database"
@@ -15,7 +15,6 @@ import (
 type Set struct {
 	GetEndpoint           endpoint.Endpoint
 	AddEndpoint           endpoint.Endpoint
-	UpdateEndpoint        endpoint.Endpoint
 	RemoveEndpoint        endpoint.Endpoint
 	ServiceStatusEndpoint endpoint.Endpoint
 }
@@ -24,7 +23,6 @@ func NewEndpointSet(svc database.Service) Set {
 	return Set{
 		GetEndpoint:           MakeGetEndpoint(svc),
 		AddEndpoint:           MakeAddEndpoint(svc),
-		UpdateEndpoint:        MakeUpdateEndpoint(svc),
 		RemoveEndpoint:        MakeRemoveEndpoint(svc),
 		ServiceStatusEndpoint: MakeServiceStatusEndpoint(svc),
 	}
@@ -45,22 +43,11 @@ func MakeGetEndpoint(svc database.Service) endpoint.Endpoint {
 func MakeAddEndpoint(svc database.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(AddRequest)
-		ticketID, err := svc.Add(ctx, req.Document)
+		ticketID, err := svc.Add(ctx, req.Logo, req.Image, req.Text, req.Fill, req.Pos)
 		if err != nil {
 			return AddResponse{TicketID: ticketID, Err: err.Error()}, nil
 		}
 		return AddResponse{TicketID: ticketID}, nil
-	}
-}
-
-func MakeUpdateEndpoint(svc database.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(UpdateRequest)
-		code, err := svc.Update(ctx, req.TicketID, req.Document)
-		if err != nil {
-			return UpdateResponse{Code: code, Err: err.Error()}, nil
-		}
-		return UpdateResponse{Code: code, Err: ""}, nil
 	}
 }
 
@@ -98,31 +85,19 @@ func (s *Set) Get(ctx context.Context, filters ...internal.Filter) ([]internal.D
 	return getResp.Documents, nil
 }
 
-func (s *Set) Add(ctx context.Context, doc *internal.Document) (int64, error) {
-	resp, err := s.AddEndpoint(ctx, AddRequest{Document: doc})
+func (s *Set) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
+	resp, err := s.AddEndpoint(ctx, AddRequest{Logo: logo, Image: image, Text: text, Fill: fill, Pos: pos})
 	if err != nil {
-		return -1, err
+		return "", err
 	}
 	addResp := resp.(AddResponse)
 	if addResp.Err != "" {
-		return -1, errors.New(addResp.Err)
+		return "", errors.New(addResp.Err)
 	}
 	return addResp.TicketID, nil
 }
 
-func (s *Set) Update(ctx context.Context, ticketID int64, doc *internal.Document) (int, error) {
-	resp, err := s.UpdateEndpoint(ctx, UpdateRequest{TicketID: ticketID, Document: doc})
-	if err != nil {
-		return http.StatusBadRequest, err
-	}
-	updateResp := resp.(UpdateResponse)
-	if updateResp.Err != "" {
-		return http.StatusConflict, errors.New(updateResp.Err)
-	}
-	return updateResp.Code, nil
-}
-
-func (s *Set) Remove(ctx context.Context, ticketID int64) (int, error) {
+func (s *Set) Remove(ctx context.Context, ticketID string) (int, error) {
 	resp, err := s.RemoveEndpoint(ctx, RemoveRequest{TicketID: ticketID})
 	removeResp := resp.(RemoveResponse)
 	if err != nil {

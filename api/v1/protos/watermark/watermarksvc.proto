@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package watermark;
 
-option go_package = "./watermark";
+option go_package = "watermark-service/api/v1/protos/watermark";
 
 service Watermark {
     rpc Create (CreateRequest) returns (CreateResponse) {}
@@ -10,15 +10,20 @@ service Watermark {
     rpc ServiceStatus (ServiceStatusRequest) returns (ServiceStatusResponse) {}
 }
 
+enum Position {
+    left_top = 0;
+    left_bottom = 1;
+    right_top = 2;
+    right_bottom = 3;
+}
+message Image {
+    bytes data = 1;
+    string type = 2;
+}
+
 message CreateRequest {
-    enum Position {
-        left_top = 0;
-        left_bottom = 1;
-        right_top = 2;
-        right_bottom = 3;
-    }
-    optional bytes logo = 1;
-    bytes image = 2;
+    optional Image logo = 1;
+    Image image = 2;
     string text = 3;
     bool fill = 4;
     Position pos = 5;

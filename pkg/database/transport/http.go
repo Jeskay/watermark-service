@@ -25,12 +25,6 @@ func NewHttpHandler(ep endpoints.Set) http.Handler {
 		decodeHTTPServiceStatusRequest,
 		encodeResponse,
 	))
-	m.Handle("/update", httpkit.NewServer(
-		ep.UpdateEndpoint,
-		decodeHTTPUpdateRequest,
-		encodeResponse,
-		opts...,
-	))
 	m.Handle("/add", httpkit.NewServer(
 		ep.AddEndpoint,
 		decodeHTTPAddRequest,
@@ -59,15 +53,6 @@ func decodeHTTPGetRequest(_ context.Context, r *http.Request) (interface{}, erro
 		logger.Log("Get request with empty body")
 		return req, nil
 	}
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
-}
-
-func decodeHTTPUpdateRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req endpoints.UpdateRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return nil, err

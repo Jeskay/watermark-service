@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"image"
 	"log"
 	"net/http"
 	authproto "watermark-service/api/v1/protos/auth"
@@ -55,13 +56,13 @@ func (m *authMiddleware) verifyUser(ctx context.Context) (*authproto.User, error
 	return resp.User, nil
 }
 
-func (m *authMiddleware) Add(ctx context.Context, doc *internal.Document) (int64, error) {
+func (m *authMiddleware) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
 	user, err := m.verifyUser(ctx)
 	if err != nil {
 		log.Println(err)
-		return http.StatusUnauthorized, err
+		return "", err
 	}
-	return m.next.Add(context.WithValue(ctx, "user", user), doc)
+	return m.next.Add(context.WithValue(ctx, "user", user), logo, image, text, fill, pos)
 }
 
 func (m *authMiddleware) Get(ctx context.Context, filters ...internal.Filter) ([]internal.Document, error) {
@@ -73,16 +74,7 @@ func (m *authMiddleware) Get(ctx context.Context, filters ...internal.Filter) ([
 	return m.next.Get(context.WithValue(ctx, "user", user), filters...)
 }
 
-func (m *authMiddleware) Update(ctx context.Context, ticketID int64, doc *internal.Document) (int, error) {
-	user, err := m.verifyUser(ctx)
-	if err != nil {
-		log.Println(err)
-		return http.StatusUnauthorized, err
-	}
-	return m.next.Update(context.WithValue(ctx, "user", user), ticketID, doc)
-}
-
-func (m *authMiddleware) Remove(ctx context.Context, ticketID int64) (int, error) {
+func (m *authMiddleware) Remove(ctx context.Context, ticketID string) (int, error) {
 	user, err := m.verifyUser(ctx)
 	if err != nil {
 		log.Println(err)
