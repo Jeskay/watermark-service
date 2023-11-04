@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"watermark-service/config"
 	"watermark-service/internal/database"
-	"watermark-service/internal/util"
 	dbsvc "watermark-service/pkg/database"
 	"watermark-service/pkg/database/endpoints"
 	"watermark-service/pkg/database/transport"
@@ -20,23 +20,32 @@ import (
 	"github.com/oklog/oklog/pkg/group"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-)
-
-const (
-	defaultHTTPPort = "9091"
-	defaultGRPCPort = "9092"
+	"gopkg.in/yaml.v3"
 )
 
 var (
-	logger      log.Logger
-	httpAddr    = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
-	grpcAddr    = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
-	authSvcAddr = net.JoinHostPort("localhost", util.EnvString("AUTH_SVC_PORT", "9022"))
+	cfg    config.DatabaseConfig
+	logger log.Logger
 )
 
 func main() {
+	f, err := os.Open("../../config/database_config.yaml")
+	if err != nil {
+		logger.Log("FATAL: failed to load config", err.Error())
+	}
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&cfg)
+	if err != nil {
+		logger.Log("FATAL: failed to decode config file", err.Error())
+	}
+	f.Close()
 
-	orm, err := database.Init(database.DefaultHost, database.DefaultPort, database.DefaultDBUser, database.DefaultDatabase, database.DefaultPassword)
+	var (
+		grpcAddr    = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
+		httpAddr    = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
+		authSvcAddr = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
+	)
+	orm, err := database.Init(cfg.DbConnection.Host, cfg.DbConnection.Port, cfg.DbConnection.User, cfg.DbConnection.Database, cfg.DbConnection.Password)
 	if err != nil {
 		logger.Log("FATAL: failed to load db with error ", err.Error())
 	}

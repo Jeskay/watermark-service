@@ -5,7 +5,6 @@ github.com/boombuler/barcode/qr
 github.com/boombuler/barcode/utils
 # github.com/go-kit/kit v0.13.0
 ## explicit; go 1.17
-github.com/go-kit/kit/auth/jwt
 github.com/go-kit/kit/endpoint
 github.com/go-kit/kit/transport
 github.com/go-kit/kit/transport/grpc
@@ -189,6 +188,9 @@ google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3
 # gorm.io/driver/postgres v1.5.2
 ## explicit; go 1.18
 gorm.io/driver/postgres

@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	proto "watermark-service/api/v1/protos/watermark"
-	"watermark-service/internal/util"
+	"watermark-service/config"
 	"watermark-service/pkg/watermark"
 	"watermark-service/pkg/watermark/endpoints"
 	"watermark-service/pkg/watermark/transport"
@@ -17,23 +17,30 @@ import (
 	"github.com/go-kit/log"
 	"github.com/oklog/oklog/pkg/group"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
 )
 
-const (
-	defaultHTTPPort = "8081"
-	defaultGRPCPort = "8082"
+var (
+	cfg    config.WatermarkConfig
+	logger log.Logger
 )
 
 func main() {
+	f, err := os.Open("../../config/watermark_config.yaml")
+	if err != nil {
+		logger.Log("FATAL: failed to load config", err.Error())
+	}
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&cfg)
+	if err != nil {
+		logger.Log("FATAL: failed to decode config file", err.Error())
+	}
+	f.Close()
+
 	var (
-		logger   log.Logger
-		httpAddr = net.JoinHostPort("localhost", util.EnvString("HTTP_PORT", defaultHTTPPort))
-		grpcAddr = net.JoinHostPort("localhost", util.EnvString("GRPC_PORT", defaultGRPCPort))
+		httpAddr = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
+		grpcAddr = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
 	)
-
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-
 	var service watermark.Service
 	{
 		service = watermark.NewService()
@@ -91,4 +98,9 @@ func main() {
 		})
 	}
 	logger.Log("exit", g.Run())
+}
+
+func init() {
+	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }
