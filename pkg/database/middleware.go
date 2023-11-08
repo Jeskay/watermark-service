@@ -9,6 +9,7 @@ import (
 	authproto "watermark-service/api/v1/protos/auth"
 	"watermark-service/internal"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -41,7 +42,7 @@ type authMiddleware struct {
 	authClient    authproto.AuthenticationClient
 }
 
-func (m *authMiddleware) verifyUser(ctx context.Context) (*authproto.User, error) {
+func (m *authMiddleware) verifyUser(ctx context.Context) (*internal.User, error) {
 	token, ok := ctx.Value("token").(string)
 	if !ok {
 		return nil, errors.New("Empty header")
@@ -53,7 +54,17 @@ func (m *authMiddleware) verifyUser(ctx context.Context) (*authproto.User, error
 	if !resp.Verified {
 		return nil, errors.New("Invalid token")
 	}
-	return resp.User, nil
+	var id uuid.UUID
+	err = id.UnmarshalBinary(resp.User.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &internal.User{
+		ID:         id,
+		Name:       resp.User.Name,
+		Email:      resp.User.Email,
+		OtpEnabled: resp.User.OtpEnabled,
+	}, nil
 }
 
 func (m *authMiddleware) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {

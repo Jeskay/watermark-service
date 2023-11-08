@@ -41,9 +41,10 @@ func main() {
 	f.Close()
 
 	var (
-		grpcAddr    = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
-		httpAddr    = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
-		authSvcAddr = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
+		grpcAddr         = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
+		httpAddr         = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
+		authSvcAddr      = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
+		watermarkSvcAddr = net.JoinHostPort(cfg.Services.Watermark.Host, cfg.Services.Watermark.Port)
 	)
 	orm, err := database.Init(cfg.DbConnection.Host, cfg.DbConnection.Port, cfg.DbConnection.User, cfg.DbConnection.Database, cfg.DbConnection.Password)
 	if err != nil {
@@ -52,7 +53,7 @@ func main() {
 
 	var service dbsvc.Service
 	{
-		service = dbsvc.NewService(orm)
+		service = dbsvc.NewService(orm, watermarkSvcAddr, cfg.Cloudinary.Cloud, cfg.Cloudinary.Api, cfg.Cloudinary.Secret)
 		service = dbsvc.AuthMiddleware(authSvcAddr)(service)
 	}
 

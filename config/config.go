@@ -23,8 +23,14 @@ type DatabaseConfig struct {
 	HTTPAddress  address            `yaml:"http"`
 	GRPCAddress  address            `yaml:"grpc"`
 	DbConnection DatabaseConnection `yaml:"database"`
-	Services     struct {
-		Auth address `yaml:"auth"`
+	Cloudinary   struct {
+		Cloud  string `yaml:"cloud"`
+		Api    string `yaml:"api"`
+		Secret string `yaml:"secret"`
+	} `yaml:"cloudinary"`
+	Services struct {
+		Auth      address `yaml:"auth"`
+		Watermark address `yaml:"watermark"`
 	} `yaml:"services"`
 }
 
