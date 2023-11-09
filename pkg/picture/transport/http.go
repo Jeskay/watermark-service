@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"watermark-service/internal"
 	"watermark-service/internal/util"
-	"watermark-service/pkg/watermark"
-	"watermark-service/pkg/watermark/endpoints"
+	"watermark-service/pkg/picture"
+	"watermark-service/pkg/picture/endpoints"
 
 	httpkit "github.com/go-kit/kit/transport/http"
 
@@ -43,7 +43,7 @@ func decodeHTTPServiceStatusRequest(_ context.Context, _ *http.Request) (interfa
 
 func decodeHTTPCreateRequest(ctx context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.CreateRequest
-	val := ctx.Value(watermark.ImageContextKey("image"))
+	val := ctx.Value(picture.ImageContextKey("image"))
 	if val == nil {
 		return nil, util.ErrInvalidArg
 	}
@@ -51,7 +51,7 @@ func decodeHTTPCreateRequest(ctx context.Context, r *http.Request) (interface{},
 	if !ok {
 		return nil, util.ErrInvalidArg
 	}
-	val = ctx.Value(watermark.LogoContextKey("logo"))
+	val = ctx.Value(picture.LogoContextKey("logo"))
 	logo, ok := val.(image.Image)
 	if !ok {
 		return nil, util.ErrInvalidArg
@@ -101,9 +101,9 @@ func extractImages(ctx context.Context, r *http.Request) (newCtx context.Context
 		return ctx
 	}
 	img := getImageFromFile("image", r)
-	newCtx = context.WithValue(ctx, watermark.ImageContextKey("image"), img)
+	newCtx = context.WithValue(ctx, picture.ImageContextKey("image"), img)
 	logo := getImageFromFile("logo", r)
-	newCtx = context.WithValue(newCtx, watermark.LogoContextKey("logo"), logo)
+	newCtx = context.WithValue(newCtx, picture.LogoContextKey("logo"), logo)
 	return
 }
 

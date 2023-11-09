@@ -44,7 +44,7 @@ func main() {
 		grpcAddr         = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
 		httpAddr         = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
 		authSvcAddr      = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
-		watermarkSvcAddr = net.JoinHostPort(cfg.Services.Watermark.Host, cfg.Services.Watermark.Port)
+		watermarkSvcAddr = net.JoinHostPort(cfg.Services.Picture.Host, cfg.Services.Picture.Port)
 	)
 	orm, err := database.Init(cfg.DbConnection.Host, cfg.DbConnection.Port, cfg.DbConnection.User, cfg.DbConnection.Database, cfg.DbConnection.Password)
 	if err != nil {

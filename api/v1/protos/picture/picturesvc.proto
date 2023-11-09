@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package watermark;
+package picture;
 
-option go_package = "watermark-service/api/v1/protos/watermark";
+option go_package = "watermark-service/api/v1/protos/picture";
 
-service Watermark {
+service Picture {
     rpc Create (CreateRequest) returns (CreateResponse) {}
 
     rpc ServiceStatus (ServiceStatusRequest) returns (ServiceStatusResponse) {}

@@ -29,12 +29,12 @@ type DatabaseConfig struct {
 		Secret string `yaml:"secret"`
 	} `yaml:"cloudinary"`
 	Services struct {
-		Auth      address `yaml:"auth"`
-		Watermark address `yaml:"watermark"`
+		Auth    address `yaml:"auth"`
+		Picture address `yaml:"picture"`
 	} `yaml:"services"`
 }
 
-type WatermarkConfig struct {
+type PictureConfig struct {
 	HTTPAddress  address            `yaml:"http"`
 	GRPCAddress  address            `yaml:"grpc"`
 	DbConnection DatabaseConnection `yaml:"database"`

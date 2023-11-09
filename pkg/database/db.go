@@ -6,7 +6,7 @@ import (
 	"image"
 	"net/http"
 	"strings"
-	watermarkproto "watermark-service/api/v1/protos/watermark"
+	pictureproto "watermark-service/api/v1/protos/picture"
 	"watermark-service/internal"
 	"watermark-service/internal/database"
 	"watermark-service/internal/util"
@@ -17,10 +17,10 @@ import (
 )
 
 type dbService struct {
-	orm                *gorm.DB
-	watermarkAvailable bool
-	watermarkClient    watermarkproto.WatermarkClient
-	storage            database.Storage
+	orm              *gorm.DB
+	pictureAvailable bool
+	pictureClient    pictureproto.PictureClient
+	storage          database.Storage
 }
 
 func NewService(dbORM *gorm.DB, watermarkServiceAddr string, cloudName, apiKey, secretKey string) *dbService {
@@ -29,16 +29,16 @@ func NewService(dbORM *gorm.DB, watermarkServiceAddr string, cloudName, apiKey, 
 	conn, err := grpc.Dial(watermarkServiceAddr, opts...)
 	if err != nil {
 		return &dbService{
-			orm:                dbORM,
-			watermarkAvailable: false,
+			orm:              dbORM,
+			pictureAvailable: false,
 		}
 	}
-	c := watermarkproto.NewWatermarkClient(conn)
+	c := pictureproto.NewPictureClient(conn)
 	return &dbService{
-		orm:                dbORM,
-		watermarkAvailable: true,
-		watermarkClient:    c,
-		storage:            database.NewCloudinaryStorage(cloudName, apiKey, secretKey),
+		orm:              dbORM,
+		pictureAvailable: true,
+		pictureClient:    c,
+		storage:          database.NewCloudinaryStorage(cloudName, apiKey, secretKey),
 	}
 }
 
@@ -48,15 +48,15 @@ func (d *dbService) Add(ctx context.Context, logo image.Image, image image.Image
 		return "", nil
 	}
 	data := util.ImageToBytes(logo, ".png")
-	Logo := &watermarkproto.Image{Data: data, Type: ".png"}
+	Logo := &pictureproto.Image{Data: data, Type: ".png"}
 	data = util.ImageToBytes(image, ".png")
-	Image := &watermarkproto.Image{Data: data, Type: ".png"}
-	resp, err := d.watermarkClient.Create(ctx, &watermarkproto.CreateRequest{
+	Image := &pictureproto.Image{Data: data, Type: ".png"}
+	resp, err := d.pictureClient.Create(ctx, &pictureproto.CreateRequest{
 		Logo:  Logo,
 		Image: Image,
 		Text:  text,
 		Fill:  fill,
-		Pos:   watermarkproto.Position(watermarkproto.Position_value[string(pos)]),
+		Pos:   pictureproto.Position(pictureproto.Position_value[string(pos)]),
 	})
 	if err != nil || resp.Err != "" {
 		return "", err

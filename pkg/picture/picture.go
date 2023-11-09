@@ -1,4 +1,4 @@
-package watermark
+package picture
 
 import (
 	"context"
@@ -9,17 +9,17 @@ import (
 	"watermark-service/internal"
 )
 
-type watermarkService struct {
+type pictureService struct {
 	log *slog.Logger
 }
 
 func NewService() Service {
-	return &watermarkService{
+	return &pictureService{
 		log: slog.Default(),
 	}
 }
 
-func (w *watermarkService) Create(ctx context.Context, Image image.Image, logo image.Image, text string, fill bool, pos internal.Position) (image.Image, error) {
+func (w *pictureService) Create(ctx context.Context, Image image.Image, logo image.Image, text string, fill bool, pos internal.Position) (image.Image, error) {
 	rect := Image.Bounds()
 	bg := image.NewRGBA(image.Rect(0, 0, rect.Dx(), rect.Dy()))
 	var offset image.Point
@@ -41,7 +41,7 @@ func (w *watermarkService) Create(ctx context.Context, Image image.Image, logo i
 	return bg, nil
 }
 
-func (w *watermarkService) ServiceStatus(_ context.Context) (int64, error) {
+func (w *pictureService) ServiceStatus(_ context.Context) (int64, error) {
 	w.log.Info("Checking the service health...")
 	return http.StatusOK, nil
 }

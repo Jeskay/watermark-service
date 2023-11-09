@@ -1,4 +1,4 @@
-package watermark
+package picture
 
 import (
 	"context"

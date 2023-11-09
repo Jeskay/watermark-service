@@ -7,11 +7,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	proto "watermark-service/api/v1/protos/watermark"
+	proto "watermark-service/api/v1/protos/picture"
 	"watermark-service/config"
-	"watermark-service/pkg/watermark"
-	"watermark-service/pkg/watermark/endpoints"
-	"watermark-service/pkg/watermark/transport"
+	"watermark-service/pkg/picture"
+	"watermark-service/pkg/picture/endpoints"
+	"watermark-service/pkg/picture/transport"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
 	"github.com/go-kit/log"
@@ -21,12 +21,12 @@ import (
 )
 
 var (
-	cfg    config.WatermarkConfig
+	cfg    config.PictureConfig
 	logger log.Logger
 )
 
 func main() {
-	f, err := os.Open("../../config/watermark_config.yaml")
+	f, err := os.Open("../../config/picture_config.yaml")
 	if err != nil {
 		logger.Log("FATAL: failed to load config", err.Error())
 	}
@@ -41,10 +41,10 @@ func main() {
 		httpAddr = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
 		grpcAddr = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
 	)
-	var service watermark.Service
+	var service picture.Service
 	{
-		service = watermark.NewService()
-		service = watermark.WatermarkMiddleware()(service)
+		service = picture.NewService()
+		service = picture.PictureMiddleware()(service)
 	}
 
 	var (
@@ -76,7 +76,7 @@ func main() {
 		g.Add(func() error {
 			logger.Log("transport", "gRPC", "addr", grpcAddr)
 			baseServer := grpc.NewServer(grpc.UnaryInterceptor(grpckit.Interceptor))
-			proto.RegisterWatermarkServer(baseServer, grpcServer)
+			proto.RegisterPictureServer(baseServer, grpcServer)
 			return baseServer.Serve(grpcListener)
 		}, func(error) {
 			grpcListener.Close()

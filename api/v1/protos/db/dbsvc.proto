@@ -4,7 +4,7 @@ package db;
 
 option go_package = "watermark-service/api/v1/protos/db";
 
-import "watermark/watermarksvc.proto";
+import "picture/picturesvc.proto";
 
 service database {
     rpc Get (GetRequest) returns (GetResponse) {}
@@ -43,11 +43,11 @@ message RemoveResponse {
 }
 
 message AddRequest {
-    optional watermark.Image logo = 1;
-    watermark.Image image = 2;
+    optional picture.Image logo = 1;
+    picture.Image image = 2;
     string text = 3;
     bool fill = 4;
-    watermark.Position pos = 5;
+    picture.Position pos = 5;
 }
 
 message AddResponse {

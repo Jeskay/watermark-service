@@ -5,7 +5,7 @@ import (
 	"errors"
 	"image"
 	"os"
-	"watermark-service/pkg/watermark"
+	"watermark-service/pkg/picture"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
@@ -16,14 +16,14 @@ type Set struct {
 	ServiceStatusEndpoint endpoint.Endpoint
 }
 
-func NewEndpointSet(svc watermark.Service) Set {
+func NewEndpointSet(svc picture.Service) Set {
 	return Set{
 		CreateEndpoint:        MakeCreateEndpoint(svc),
 		ServiceStatusEndpoint: MakeServiceStatusEndpoint(svc),
 	}
 }
 
-func MakeCreateEndpoint(svc watermark.Service) endpoint.Endpoint {
+func MakeCreateEndpoint(svc picture.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(CreateRequest)
 		code, err := svc.Create(ctx, req.Image, req.Logo, req.Text, req.Fill, req.Pos)
@@ -34,7 +34,7 @@ func MakeCreateEndpoint(svc watermark.Service) endpoint.Endpoint {
 	}
 }
 
-func MakeServiceStatusEndpoint(svc watermark.Service) endpoint.Endpoint {
+func MakeServiceStatusEndpoint(svc picture.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		_ = request.(ServiceStatusRequest)
 		code, err := svc.ServiceStatus(ctx)
