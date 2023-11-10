@@ -54,7 +54,7 @@ func decodeHTTPCreateRequest(ctx context.Context, r *http.Request) (interface{},
 	val = ctx.Value(picture.LogoContextKey("logo"))
 	logo, ok := val.(image.Image)
 	if !ok {
-		return nil, util.ErrInvalidArg
+		req.Logo = nil
 	}
 	req.Image = img
 	req.Logo = logo
