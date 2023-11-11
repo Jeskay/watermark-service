@@ -77,6 +77,33 @@ func CombineTextWithLogo(logo image.Image, text string) image.Image {
 	}
 }
 
+func FillImageWithWatermarks(watermark image.Image, src image.Image) draw.Image {
+	const space = 20
+	src_rect := src.Bounds()
+	wtm_rect := watermark.Bounds()
+
+	bg := image.NewRGBA(image.Rect(0, 0, src_rect.Dx(), src_rect.Dy()))
+	draw.Draw(bg, src_rect, src, image.Point{0, 0}, draw.Over)
+	//applying opacity mask to watermark
+	mask := image.NewUniform(color.Alpha{96})
+
+	offset := image.Pt(0, 0)
+	step_x := image.Pt(wtm_rect.Dx()+space, 0)
+	step_y := image.Pt(0, (wtm_rect.Dy()+space)*2)
+	counter := 0
+	for offset.X < src_rect.Dx() {
+		for ; offset.Y < src_rect.Dy(); counter++ {
+			if counter%2 == 0 {
+				draw.DrawMask(bg, src_rect.Add(offset), watermark, image.Point{0, 0}, mask, image.Point{0, 0}, draw.Over)
+			}
+			offset = offset.Add(step_y)
+		}
+		offset.Y = 0
+		offset = offset.Add(step_x)
+	}
+	return bg
+}
+
 func AddWatermarkToImage(watermark image.Image, src image.Image, pos Position) draw.Image {
 	src_rect := src.Bounds()
 	wtm_rect := watermark.Bounds()

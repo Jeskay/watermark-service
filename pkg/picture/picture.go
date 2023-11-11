@@ -25,6 +25,9 @@ func (w *pictureService) Create(ctx context.Context, Image image.Image, logo ima
 		return nil, errors.New("No data to insert")
 	}
 	watermark := internal.CombineTextWithLogo(logo, text)
+	if fill {
+		return internal.FillImageWithWatermarks(watermark, Image), nil
+	}
 	return internal.AddWatermarkToImage(watermark, Image, pos), nil
 }
 
