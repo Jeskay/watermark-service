@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -29,7 +30,15 @@ var (
 )
 
 func main() {
-	f, err := os.Open("../../config/auth_config.yaml")
+	build := flag.Bool("build", false, "use context for built executable")
+	flag.Parse()
+	var confPath string
+	if *build {
+		confPath = "/config/auth_config.yaml"
+	} else {
+		confPath = "../../config/auth_config.yaml"
+	}
+	f, err := os.Open(confPath)
 	if err != nil {
 		logger.Log("FATAL: failed to load config", err.Error())
 	}
