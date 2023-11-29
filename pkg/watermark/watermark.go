@@ -1,4 +1,4 @@
-package database
+package watermark
 
 import (
 	"context"
@@ -8,41 +8,41 @@ import (
 	"strings"
 	pictureproto "watermark-service/api/v1/protos/picture"
 	"watermark-service/internal"
-	"watermark-service/internal/database"
 	"watermark-service/internal/util"
+	"watermark-service/internal/watermark"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/gorm"
 )
 
-type dbService struct {
+type watermarkService struct {
 	orm              *gorm.DB
 	pictureAvailable bool
 	pictureClient    pictureproto.PictureClient
-	storage          database.Storage
+	storage          watermark.Storage
 }
 
-func NewService(dbORM *gorm.DB, watermarkServiceAddr string, cloudName, apiKey, secretKey string) *dbService {
+func NewService(dbORM *gorm.DB, watermarkServiceAddr string, cloudName, apiKey, secretKey string) *watermarkService {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	conn, err := grpc.Dial(watermarkServiceAddr, opts...)
 	if err != nil {
-		return &dbService{
+		return &watermarkService{
 			orm:              dbORM,
 			pictureAvailable: false,
 		}
 	}
 	c := pictureproto.NewPictureClient(conn)
-	return &dbService{
+	return &watermarkService{
 		orm:              dbORM,
 		pictureAvailable: true,
 		pictureClient:    c,
-		storage:          database.NewCloudinaryStorage(cloudName, apiKey, secretKey),
+		storage:          watermark.NewCloudinaryStorage(cloudName, apiKey, secretKey),
 	}
 }
 
-func (d *dbService) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
+func (d *watermarkService) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
 	claimedUser, ok := ctx.Value("user").(*internal.User)
 	if !ok {
 		return "", nil
@@ -65,7 +65,7 @@ func (d *dbService) Add(ctx context.Context, logo image.Image, image image.Image
 	if err != nil {
 		return "", nil
 	}
-	newDoc := database.Document{
+	newDoc := watermark.Document{
 		AuthorId: claimedUser.ID,
 		Title:    "TestImage",
 		ImageUrl: url,
@@ -79,12 +79,12 @@ func (d *dbService) Add(ctx context.Context, logo image.Image, image image.Image
 	return url, nil
 }
 
-func (d *dbService) Get(ctx context.Context, filters ...internal.Filter) ([]internal.Document, error) {
+func (d *watermarkService) Get(ctx context.Context, filters ...internal.Filter) ([]internal.Document, error) {
 	claimedUser, ok := ctx.Value("user").(*internal.User)
 	if !ok {
 		return nil, nil
 	}
-	var result []database.Document
+	var result []watermark.Document
 	res := d.orm.Find(&result, "author_id = ?", claimedUser.ID)
 	if res.Error != nil {
 		return nil, res.Error
@@ -101,31 +101,31 @@ func (d *dbService) Get(ctx context.Context, filters ...internal.Filter) ([]inte
 	return docs, nil
 }
 
-func (d *dbService) Remove(ctx context.Context, ticketId string) (int, error) {
+func (d *watermarkService) Remove(ctx context.Context, ticketId string) (int, error) {
 	claimedUser, ok := ctx.Value("user").(*internal.User)
 	if !ok {
 		return http.StatusUnauthorized, nil
 	}
-	var result []database.Document
-	r := d.orm.Model(&database.Document{}).Find(&result, "author_id = ? AND image_url = ?", claimedUser.ID, ticketId)
+	var result []watermark.Document
+	r := d.orm.Model(&watermark.Document{}).Find(&result, "author_id = ? AND image_url = ?", claimedUser.ID, ticketId)
 	if r.Error != nil {
 		return http.StatusInternalServerError, r.Error
 	}
 	if len(result) == 0 {
 		return http.StatusNotFound, nil
 	}
-	r = d.orm.Delete(&database.Document{}, "image_url = ?", ticketId)
+	r = d.orm.Delete(&watermark.Document{}, "image_url = ?", ticketId)
 	if r.Error != nil {
 		return http.StatusInternalServerError, r.Error
 	}
 	err := d.storage.Delete(ctx, ticketId)
 	if err != nil {
-		d.orm.Model(&database.Document{}).Where("image_url", ticketId).Update("deleted_at", nil)
+		d.orm.Model(&watermark.Document{}).Where("image_url", ticketId).Update("deleted_at", nil)
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusOK, nil
 }
 
-func (d *dbService) ServiceStatus(_ context.Context) (int, error) {
+func (d *watermarkService) ServiceStatus(_ context.Context) (int, error) {
 	return http.StatusOK, nil
 }

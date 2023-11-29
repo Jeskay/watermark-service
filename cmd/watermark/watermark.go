@@ -8,12 +8,12 @@ import (
 	"os/signal"
 	"syscall"
 	"watermark-service/config"
-	"watermark-service/internal/database"
-	dbsvc "watermark-service/pkg/database"
-	"watermark-service/pkg/database/endpoints"
-	"watermark-service/pkg/database/transport"
+	"watermark-service/internal/watermark"
+	watermarksvc "watermark-service/pkg/watermark"
+	"watermark-service/pkg/watermark/endpoints"
+	"watermark-service/pkg/watermark/transport"
 
-	proto "watermark-service/api/v1/protos/db"
+	proto "watermark-service/api/v1/protos/watermark"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
 	"github.com/go-kit/log"
@@ -46,15 +46,15 @@ func main() {
 		authSvcAddr      = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
 		watermarkSvcAddr = net.JoinHostPort(cfg.Services.Picture.Host, cfg.Services.Picture.Port)
 	)
-	orm, err := database.Init(cfg.DbConnection.Host, cfg.DbConnection.Port, cfg.DbConnection.User, cfg.DbConnection.Database, cfg.DbConnection.Password)
+	orm, err := watermark.Init(cfg.DbConnection.Host, cfg.DbConnection.Port, cfg.DbConnection.User, cfg.DbConnection.Database, cfg.DbConnection.Password)
 	if err != nil {
 		logger.Log("FATAL: failed to load db with error ", err.Error())
 	}
 
-	var service dbsvc.Service
+	var service watermarksvc.Service
 	{
-		service = dbsvc.NewService(orm, watermarkSvcAddr, cfg.Cloudinary.Cloud, cfg.Cloudinary.Api, cfg.Cloudinary.Secret)
-		service = dbsvc.AuthMiddleware(authSvcAddr)(service)
+		service = watermarksvc.NewService(orm, watermarkSvcAddr, cfg.Cloudinary.Cloud, cfg.Cloudinary.Api, cfg.Cloudinary.Secret)
+		service = watermarksvc.AuthMiddleware(authSvcAddr)(service)
 	}
 
 	var (
@@ -87,7 +87,7 @@ func main() {
 			logger.Log("transport", "gRPC", "addr", grpcAddr)
 			baseServer := grpc.NewServer(grpc.UnaryInterceptor(grpckit.Interceptor))
 			reflection.Register(baseServer)
-			proto.RegisterDatabaseServer(baseServer, grpcServer)
+			proto.RegisterWatermarkServer(baseServer, grpcServer)
 			return baseServer.Serve(grpcListener)
 		}, func(error) {
 			grpcListener.Close()

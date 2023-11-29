@@ -1,4 +1,4 @@
-package database
+package watermark
 
 type LogoContextKey string
 

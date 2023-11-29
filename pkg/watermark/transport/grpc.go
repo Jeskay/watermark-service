@@ -2,10 +2,10 @@ package transport
 
 import (
 	"context"
-	"watermark-service/api/v1/protos/db"
+	"watermark-service/api/v1/protos/watermark"
 	"watermark-service/internal"
 	"watermark-service/internal/util"
-	"watermark-service/pkg/database/endpoints"
+	"watermark-service/pkg/watermark/endpoints"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
 )
@@ -15,10 +15,10 @@ type grpcServer struct {
 	add           grpckit.Handler
 	remove        grpckit.Handler
 	serviceStatus grpckit.Handler
-	db.UnimplementedDatabaseServer
+	watermark.UnimplementedWatermarkServer
 }
 
-func NewGRPCServer(ep endpoints.Set) db.DatabaseServer {
+func NewGRPCServer(ep endpoints.Set) watermark.WatermarkServer {
 	return &grpcServer{
 		get:           grpckit.NewServer(ep.GetEndpoint, decodeGRPCGetRequest, encodeGRPCGetResponse),
 		add:           grpckit.NewServer(ep.AddEndpoint, decodeGRPCAddRequest, encodeGRPCAddResponse),
@@ -27,40 +27,40 @@ func NewGRPCServer(ep endpoints.Set) db.DatabaseServer {
 	}
 }
 
-func (g *grpcServer) Get(ctx context.Context, r *db.GetRequest) (*db.GetResponse, error) {
+func (g *grpcServer) Get(ctx context.Context, r *watermark.GetRequest) (*watermark.GetResponse, error) {
 	_, resp, err := g.get.ServeGRPC(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*db.GetResponse), nil
+	return resp.(*watermark.GetResponse), nil
 }
 
-func (g *grpcServer) Add(ctx context.Context, r *db.AddRequest) (*db.AddResponse, error) {
+func (g *grpcServer) Add(ctx context.Context, r *watermark.AddRequest) (*watermark.AddResponse, error) {
 	_, resp, err := g.add.ServeGRPC(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*db.AddResponse), nil
+	return resp.(*watermark.AddResponse), nil
 }
 
-func (g *grpcServer) Remove(ctx context.Context, r *db.RemoveRequest) (*db.RemoveResponse, error) {
+func (g *grpcServer) Remove(ctx context.Context, r *watermark.RemoveRequest) (*watermark.RemoveResponse, error) {
 	_, resp, err := g.remove.ServeGRPC(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*db.RemoveResponse), nil
+	return resp.(*watermark.RemoveResponse), nil
 }
 
-func (g *grpcServer) ServiceStatus(ctx context.Context, r *db.ServiceStatusRequest) (*db.ServiceStatusResponse, error) {
+func (g *grpcServer) ServiceStatus(ctx context.Context, r *watermark.ServiceStatusRequest) (*watermark.ServiceStatusResponse, error) {
 	_, resp, err := g.serviceStatus.ServeGRPC(ctx, r)
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*db.ServiceStatusResponse), nil
+	return resp.(*watermark.ServiceStatusResponse), nil
 }
 
 func decodeGRPCGetRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*db.GetRequest)
+	req := grpcReq.(*watermark.GetRequest)
 	var filters []internal.Filter
 	for _, f := range req.Filters {
 		filters = append(filters, internal.Filter{Key: f.Key, Value: f.Value})
@@ -69,12 +69,12 @@ func decodeGRPCGetRequest(_ context.Context, grpcReq interface{}) (interface{}, 
 }
 
 func decodeGRPCRemoveRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*db.RemoveRequest)
+	req := grpcReq.(*watermark.RemoveRequest)
 	return endpoints.RemoveRequest{TicketID: req.TicketID}, nil
 }
 
 func decodeGRPCAddRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*db.AddRequest)
+	req := grpcReq.(*watermark.AddRequest)
 	return endpoints.AddRequest{
 		Logo:  util.ByteToImage(req.Logo.Data, req.Logo.Type),
 		Image: util.ByteToImage(req.Image.Data, req.Image.Type),
@@ -90,7 +90,7 @@ func decodeGRPCServiceStatusRequest(_ context.Context, grpcReq interface{}) (int
 
 func encodeGRPCGetResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
 	response := grpcResponse.(endpoints.GetResponse)
-	var docs []*db.Document
+	var docs []*watermark.Document
 	for _, d := range response.Documents {
 		ticket_id, err := d.ID.MarshalBinary()
 		if err != nil {
@@ -100,7 +100,7 @@ func encodeGRPCGetResponse(_ context.Context, grpcResponse interface{}) (interfa
 		if err != nil {
 			return nil, err
 		}
-		doc := db.Document{
+		doc := watermark.Document{
 			TicketId: ticket_id,
 			AuthorId: author_id,
 			Title:    d.Title,
@@ -108,20 +108,20 @@ func encodeGRPCGetResponse(_ context.Context, grpcResponse interface{}) (interfa
 		}
 		docs = append(docs, &doc)
 	}
-	return &db.GetResponse{Documents: docs, Err: response.Err}, nil
+	return &watermark.GetResponse{Documents: docs, Err: response.Err}, nil
 }
 
 func encodeGRPCRemoveResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
 	response := grpcResponse.(endpoints.RemoveResponse)
-	return &db.RemoveResponse{Code: int64(response.Code), Err: response.Err}, nil
+	return &watermark.RemoveResponse{Code: int64(response.Code), Err: response.Err}, nil
 }
 
 func encodeGRPCServiceStatusResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
 	response := grpcResponse.(endpoints.ServiceStatusResponse)
-	return &db.ServiceStatusResponse{Code: int64(response.Code), Err: response.Err}, nil
+	return &watermark.ServiceStatusResponse{Code: int64(response.Code), Err: response.Err}, nil
 }
 
 func encodeGRPCAddResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
 	response := grpcResponse.(endpoints.AddResponse)
-	return &db.AddResponse{TicketID: response.TicketID, Err: response.Err}, nil
+	return &watermark.AddResponse{TicketID: response.TicketID, Err: response.Err}, nil
 }

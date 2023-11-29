@@ -1,12 +1,12 @@
 syntax = "proto3";
 
-package db;
+package watermark;
 
-option go_package = "watermark-service/api/v1/protos/db";
+option go_package = "watermark-service/api/v1/protos/watermark";
 
 import "picture/picturesvc.proto";
 
-service database {
+service watermark {
     rpc Get (GetRequest) returns (GetResponse) {}
     rpc Remove (RemoveRequest) returns (RemoveResponse) {}
     rpc Add (AddRequest) returns (AddResponse) {}

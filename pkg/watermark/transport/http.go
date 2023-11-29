@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"watermark-service/internal"
 	"watermark-service/internal/util"
-	"watermark-service/pkg/database/endpoints"
+	"watermark-service/pkg/watermark/endpoints"
 
 	httpkit "github.com/go-kit/kit/transport/http"
 

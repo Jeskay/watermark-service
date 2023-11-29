@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Database Microservice",
+            "name": "Watermark Microservice",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/database/db.go"
+            "program": "${workspaceFolder}/cmd/watermark/watermark.go"
         },
         {
             "name": "Auth Microservice",

@@ -6,7 +6,7 @@ import (
 	"image"
 	"os"
 	"watermark-service/internal"
-	"watermark-service/pkg/database"
+	"watermark-service/pkg/watermark"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/log"
@@ -19,7 +19,7 @@ type Set struct {
 	ServiceStatusEndpoint endpoint.Endpoint
 }
 
-func NewEndpointSet(svc database.Service) Set {
+func NewEndpointSet(svc watermark.Service) Set {
 	return Set{
 		GetEndpoint:           MakeGetEndpoint(svc),
 		AddEndpoint:           MakeAddEndpoint(svc),
@@ -28,7 +28,7 @@ func NewEndpointSet(svc database.Service) Set {
 	}
 }
 
-func MakeGetEndpoint(svc database.Service) endpoint.Endpoint {
+func MakeGetEndpoint(svc watermark.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(GetRequest)
 		docs, err := svc.Get(ctx, req.Filters...)
@@ -40,7 +40,7 @@ func MakeGetEndpoint(svc database.Service) endpoint.Endpoint {
 	}
 }
 
-func MakeAddEndpoint(svc database.Service) endpoint.Endpoint {
+func MakeAddEndpoint(svc watermark.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(AddRequest)
 		ticketID, err := svc.Add(ctx, req.Logo, req.Image, req.Text, req.Fill, req.Pos)
@@ -51,7 +51,7 @@ func MakeAddEndpoint(svc database.Service) endpoint.Endpoint {
 	}
 }
 
-func MakeRemoveEndpoint(svc database.Service) endpoint.Endpoint {
+func MakeRemoveEndpoint(svc watermark.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(RemoveRequest)
 		code, err := svc.Remove(ctx, req.TicketID)
@@ -62,7 +62,7 @@ func MakeRemoveEndpoint(svc database.Service) endpoint.Endpoint {
 	}
 }
 
-func MakeServiceStatusEndpoint(svc database.Service) endpoint.Endpoint {
+func MakeServiceStatusEndpoint(svc watermark.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		_ = request.(ServiceStatusRequest)
 		code, err := svc.ServiceStatus(ctx)
