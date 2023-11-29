@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -26,7 +27,17 @@ var (
 )
 
 func main() {
-	f, err := os.Open("../../config/picture_config.yaml")
+	var build bool
+	flag.BoolVar(&build, "built", false, "use context for built executable")
+	flag.Parse()
+	logger.Log(build)
+	var confPath string
+	if build {
+		confPath = "./config/picture_config.yaml"
+	} else {
+		confPath = "../../config/picture_config.yaml"
+	}
+	f, err := os.Open(confPath)
 	if err != nil {
 		logger.Log("FATAL: failed to load config", err.Error())
 	}

@@ -1,10 +1,7 @@
 package authentication
 
 import (
-	"fmt"
-
 	uuid "github.com/google/uuid"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -28,14 +25,6 @@ func (user *User) BeforeCreate(*gorm.DB) error {
 	return nil
 }
 
-func Init(host, port, user, dbname, pass string) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", host, port, user, dbname, pass)
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: dsn,
-	}), &gorm.Config{})
-	if err != nil {
-		return db, err
-	}
-	err = db.AutoMigrate(&User{})
-	return db, err
+func InitDb(db *gorm.DB) error {
+	return db.AutoMigrate(&User{})
 }

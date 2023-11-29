@@ -4,24 +4,32 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"time"
 
 	"strings"
 	"watermark-service/internal"
+	"watermark-service/internal/authentication"
 	auth "watermark-service/internal/authentication"
 
+	"github.com/go-kit/log"
 	jwt "github.com/golang-jwt/jwt/v4"
 
 	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+var logger log.Logger
+
 type authService struct {
-	orm        *gorm.DB
-	signingKey []byte
+	ORMInstance *gorm.DB
+	DBAvailable bool
+	Dsn         string
+	SigningKey  []byte
 }
 
 type userClaims struct {
@@ -29,14 +37,46 @@ type userClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewService(dbORM *gorm.DB, signingKey string) *authService {
-	return &authService{orm: dbORM, signingKey: []byte(signingKey)}
+func NewService(dbConnection internal.DatabaseConnectionStr, signingKey string) *authService {
+	dsn := dbConnection.GetDSN()
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: dsn,
+	}))
+	service := &authService{ORMInstance: db, DBAvailable: true, SigningKey: []byte(signingKey), Dsn: dsn}
+	if err == nil {
+		err = authentication.InitDb(db)
+	}
+	if err != nil {
+		service.DBAvailable = false
+		go service.Reconnect()
+	}
+	return service
+}
+
+func (a *authService) Reconnect() {
+	for idleTime := time.Duration(2); idleTime < 1000; idleTime *= idleTime {
+		db, err := gorm.Open(postgres.New(postgres.Config{
+			DSN: a.Dsn,
+		}))
+		if err == nil {
+			err = authentication.InitDb(db)
+		}
+		if err == nil {
+			a.ORMInstance = db
+			a.DBAvailable = true
+			break
+		}
+		logger.Log("Reconnect Failed with error: ", err)
+		logger.Log("Attempt to reconnect after ", idleTime, " seconds")
+		time.Sleep(idleTime * time.Second)
+	}
+	logger.Log("Reconnected to database: ", a.Dsn)
 }
 
 func (a *authService) Login(ctx context.Context, email, password string) (int64, string) {
 	var user auth.User
 	token2FA := ctx.Value("2FA").(string)
-	result := a.orm.First(&user, "email = ?", email)
+	result := a.ORMInstance.First(&user, "email = ?", email)
 	if result.Error != nil {
 		return http.StatusUnauthorized, ""
 	}
@@ -59,7 +99,7 @@ func (a *authService) Login(ctx context.Context, email, password string) (int64,
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString(a.signingKey)
+	signedToken, err := token.SignedString(a.SigningKey)
 	if err != nil {
 		return http.StatusUnauthorized, ""
 	}
@@ -76,7 +116,7 @@ func (a *authService) Register(_ context.Context, email, name, password string) 
 		Email:    email,
 		Password: string(hash),
 	}
-	result := a.orm.Create(&newUser)
+	result := a.ORMInstance.Create(&newUser)
 	if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
 		return "", errors.New("User already exists")
 	} else if result.Error != nil {
@@ -91,7 +131,7 @@ func (a *authService) Generate(ctx context.Context) (string, string) {
 	if !ok {
 		return "", ""
 	}
-	result := a.orm.First(&user, "id = ?", claimedUser.ID)
+	result := a.ORMInstance.First(&user, "id = ?", claimedUser.ID)
 	if result.Error != nil {
 		return "", ""
 	}
@@ -109,7 +149,7 @@ func (a *authService) Generate(ctx context.Context) (string, string) {
 		Otp_auth_url: key.URL(),
 	}
 
-	a.orm.Model(&user).Updates(updateData)
+	a.ORMInstance.Model(&user).Updates(updateData)
 	return key.Secret(), key.URL()
 }
 
@@ -119,7 +159,7 @@ func (a *authService) Verify(ctx context.Context, token string) (bool, *internal
 	if !ok {
 		return false, nil
 	}
-	result := a.orm.First(&user, "id = ?", claimedUser.ID)
+	result := a.ORMInstance.First(&user, "id = ?", claimedUser.ID)
 	if result.Error != nil {
 		return false, nil
 	}
@@ -131,7 +171,7 @@ func (a *authService) Verify(ctx context.Context, token string) (bool, *internal
 		updateData := auth.User{
 			Otp_verified: true,
 		}
-		a.orm.Model(&user).Updates(updateData)
+		a.ORMInstance.Model(&user).Updates(updateData)
 	}
 	userResp := internal.User{
 		ID:         user.ID,
@@ -144,7 +184,7 @@ func (a *authService) Verify(ctx context.Context, token string) (bool, *internal
 
 func (a *authService) VerifyJwt(_ context.Context, tokenString string) (bool, *internal.User) {
 	token, err := jwt.ParseWithClaims(tokenString, &userClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return a.signingKey, nil
+		return a.SigningKey, nil
 	})
 
 	if err != nil {
@@ -169,7 +209,7 @@ func (a *authService) Validate(_ context.Context, userID, token string) bool {
 	if err != nil {
 		return false
 	}
-	result := a.orm.First(&user, "id = ?", unmarshalled)
+	result := a.ORMInstance.First(&user, "id = ?", unmarshalled)
 	if result.Error != nil {
 		return false
 	}
@@ -182,12 +222,12 @@ func (a *authService) Disable(ctx context.Context) (bool, *internal.User) {
 	if !ok {
 		return false, nil
 	}
-	result := a.orm.First(&user, "id = ?", claimedUser.ID)
+	result := a.ORMInstance.First(&user, "id = ?", claimedUser.ID)
 	if result.Error != nil {
 		return false, nil
 	}
 	user.Otp_enabled = false
-	a.orm.Save(&user)
+	a.ORMInstance.Save(&user)
 	userResp := internal.User{
 		ID:         user.ID,
 		Name:       user.Name,
@@ -199,4 +239,9 @@ func (a *authService) Disable(ctx context.Context) (bool, *internal.User) {
 
 func (a *authService) ServiceStatus(_ context.Context) (int, error) {
 	return http.StatusOK, nil
+}
+
+func init() {
+	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }

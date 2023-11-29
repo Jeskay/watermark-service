@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"watermark-service/config"
-	auth "watermark-service/internal/authentication"
+	"watermark-service/internal"
 	authsvc "watermark-service/pkg/authentication"
 	"watermark-service/pkg/authentication/endpoints"
 	"watermark-service/pkg/authentication/transport"
@@ -30,11 +30,13 @@ var (
 )
 
 func main() {
-	build := flag.Bool("build", false, "use context for built executable")
+	var build bool
+	flag.BoolVar(&build, "built", false, "use context for built executable")
 	flag.Parse()
+	logger.Log(build)
 	var confPath string
-	if *build {
-		confPath = "/config/auth_config.yaml"
+	if build {
+		confPath = "./config/auth_config.yaml"
 	} else {
 		confPath = "../../config/auth_config.yaml"
 	}
@@ -52,14 +54,17 @@ func main() {
 		grpcAddr = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
 		httpAddr = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
 	)
-	orm, err := auth.Init(cfg.DbConnection.Host, cfg.DbConnection.Port, cfg.DbConnection.User, cfg.DbConnection.Database, cfg.DbConnection.Password)
-	if err != nil {
-		logger.Log("FATAL: failed to load db with error ", err.Error())
+	connectionStr := internal.DatabaseConnectionStr{
+		Host:     cfg.DbConnection.Host,
+		Port:     cfg.DbConnection.Port,
+		User:     cfg.DbConnection.User,
+		Database: cfg.DbConnection.Database,
+		Password: cfg.DbConnection.Password,
 	}
 
 	var service authsvc.Service
 	{
-		service = authsvc.NewService(orm, cfg.SecretKey)
+		service = authsvc.NewService(connectionStr, cfg.SecretKey)
 		service = authsvc.AuthMiddleware()(service)
 	}
 
@@ -95,7 +100,8 @@ func main() {
 			reflection.Register(baseServer)
 			proto.RegisterAuthenticationServer(baseServer, grpcServer)
 			return baseServer.Serve(grpcListener)
-		}, func(error) {
+		}, func(err error) {
+			logger.Log(err)
 			grpcListener.Close()
 		})
 	}
