@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -24,12 +25,22 @@ import (
 )
 
 var (
-	cfg    config.DatabaseConfig
+	cfg    config.WatermarkConfig
 	logger log.Logger
 )
 
 func main() {
-	f, err := os.Open("../../config/database_config.yaml")
+	var build bool
+	flag.BoolVar(&build, "built", false, "use context for built executable")
+	flag.Parse()
+	logger.Log(build)
+	var confPath string
+	if build {
+		confPath = "./config/watermark_config.yaml"
+	} else {
+		confPath = "../../config/watermark_config.yaml"
+	}
+	f, err := os.Open(confPath)
 	if err != nil {
 		logger.Log("FATAL: failed to load config", err.Error())
 	}

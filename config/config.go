@@ -19,7 +19,7 @@ type AuthenticationConfig struct {
 	SecretKey    string             `yaml:"secret"`
 }
 
-type DatabaseConfig struct {
+type WatermarkConfig struct {
 	HTTPAddress  address            `yaml:"http"`
 	GRPCAddress  address            `yaml:"grpc"`
 	DbConnection DatabaseConnection `yaml:"database"`
