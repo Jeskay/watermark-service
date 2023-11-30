@@ -18,10 +18,12 @@ type Middleware func(Service) Service
 
 func AuthMiddleware(authServiceAddr string) Middleware {
 	return func(next Service) Service {
-		var opts []grpc.DialOption
-		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		opts := []grpc.DialOption{
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+		}
 		conn, err := grpc.Dial(authServiceAddr, opts...)
 		if err != nil {
+			logger.Log("Dialing", "AuthService", "Failed:", err)
 			return &authMiddleware{
 				next:          next,
 				authAvailable: false,

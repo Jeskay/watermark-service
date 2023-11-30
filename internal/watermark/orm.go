@@ -1,10 +1,7 @@
 package watermark
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -22,14 +19,6 @@ func (d *Document) BeforeCreate(*gorm.DB) error {
 	return nil
 }
 
-func Init(host, port, user, dbname, pass string) (*gorm.DB, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s", host, port, user, dbname, pass)
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: dsn,
-	}), &gorm.Config{})
-	if err != nil {
-		return db, err
-	}
-	err = db.AutoMigrate(&Document{})
-	return db, err
+func InitDb(db *gorm.DB) error {
+	return db.AutoMigrate(&Document{})
 }

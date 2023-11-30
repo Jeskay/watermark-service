@@ -5,41 +5,80 @@ import (
 	"errors"
 	"image"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 	pictureproto "watermark-service/api/v1/protos/picture"
 	"watermark-service/internal"
 	"watermark-service/internal/util"
 	"watermark-service/internal/watermark"
 
+	"github.com/go-kit/log"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
+var logger log.Logger
+
 type watermarkService struct {
-	orm              *gorm.DB
+	ORMInstance      *gorm.DB
+	DBAvailable      bool
+	Dsn              string
 	pictureAvailable bool
 	pictureClient    pictureproto.PictureClient
 	storage          watermark.Storage
 }
 
-func NewService(dbORM *gorm.DB, watermarkServiceAddr string, cloudName, apiKey, secretKey string) *watermarkService {
+func NewService(dbConnection internal.DatabaseConnectionStr, pictureServiceAddr string, cloudName, apiKey, secretKey string) *watermarkService {
+	dsn := dbConnection.GetDSN()
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: dsn,
+	}))
+	service := &watermarkService{
+		ORMInstance:      db,
+		DBAvailable:      true,
+		Dsn:              dsn,
+		storage:          watermark.NewCloudinaryStorage(cloudName, apiKey, secretKey),
+		pictureAvailable: true,
+	}
+	if err == nil {
+		err = watermark.InitDb(db)
+	} else {
+		service.DBAvailable = false
+		go service.Reconnect()
+	}
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(watermarkServiceAddr, opts...)
+	conn, err := grpc.Dial(pictureServiceAddr, opts...)
 	if err != nil {
-		return &watermarkService{
-			orm:              dbORM,
-			pictureAvailable: false,
+		logger.Log("Dialing", "PictureService", "Failed:", err)
+		service.pictureAvailable = false
+	} else {
+		service.pictureClient = pictureproto.NewPictureClient(conn)
+	}
+	return service
+}
+
+func (w *watermarkService) Reconnect() {
+	for idleTime := time.Duration(2); idleTime < 1000; idleTime *= idleTime {
+		db, err := gorm.Open(postgres.New(postgres.Config{
+			DSN: w.Dsn,
+		}))
+		if err == nil {
+			err = watermark.InitDb(db)
 		}
+		if err == nil {
+			w.ORMInstance = db
+			w.DBAvailable = true
+			break
+		}
+		logger.Log("Reconnect Failed with error: ", err)
+		logger.Log("Attempt to reconnect after ", idleTime, " seconds")
+		time.Sleep(idleTime * time.Second)
 	}
-	c := pictureproto.NewPictureClient(conn)
-	return &watermarkService{
-		orm:              dbORM,
-		pictureAvailable: true,
-		pictureClient:    c,
-		storage:          watermark.NewCloudinaryStorage(cloudName, apiKey, secretKey),
-	}
+	logger.Log("Reconnected", "to:", w.Dsn)
 }
 
 func (d *watermarkService) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
@@ -70,7 +109,7 @@ func (d *watermarkService) Add(ctx context.Context, logo image.Image, image imag
 		Title:    "TestImage",
 		ImageUrl: url,
 	}
-	result := d.orm.Create(&newDoc)
+	result := d.ORMInstance.Create(&newDoc)
 	if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
 		return "", errors.New("Document already exists")
 	} else if result.Error != nil {
@@ -85,7 +124,7 @@ func (d *watermarkService) Get(ctx context.Context, filters ...internal.Filter) 
 		return nil, nil
 	}
 	var result []watermark.Document
-	res := d.orm.Find(&result, "author_id = ?", claimedUser.ID)
+	res := d.ORMInstance.Find(&result, "author_id = ?", claimedUser.ID)
 	if res.Error != nil {
 		return nil, res.Error
 	}
@@ -107,20 +146,20 @@ func (d *watermarkService) Remove(ctx context.Context, ticketId string) (int, er
 		return http.StatusUnauthorized, nil
 	}
 	var result []watermark.Document
-	r := d.orm.Model(&watermark.Document{}).Find(&result, "author_id = ? AND image_url = ?", claimedUser.ID, ticketId)
+	r := d.ORMInstance.Model(&watermark.Document{}).Find(&result, "author_id = ? AND image_url = ?", claimedUser.ID, ticketId)
 	if r.Error != nil {
 		return http.StatusInternalServerError, r.Error
 	}
 	if len(result) == 0 {
 		return http.StatusNotFound, nil
 	}
-	r = d.orm.Delete(&watermark.Document{}, "image_url = ?", ticketId)
+	r = d.ORMInstance.Delete(&watermark.Document{}, "image_url = ?", ticketId)
 	if r.Error != nil {
 		return http.StatusInternalServerError, r.Error
 	}
 	err := d.storage.Delete(ctx, ticketId)
 	if err != nil {
-		d.orm.Model(&watermark.Document{}).Where("image_url", ticketId).Update("deleted_at", nil)
+		d.ORMInstance.Model(&watermark.Document{}).Where("image_url", ticketId).Update("deleted_at", nil)
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusOK, nil
@@ -128,4 +167,9 @@ func (d *watermarkService) Remove(ctx context.Context, ticketId string) (int, er
 
 func (d *watermarkService) ServiceStatus(_ context.Context) (int, error) {
 	return http.StatusOK, nil
+}
+
+func init() {
+	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }

@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 	"watermark-service/config"
-	"watermark-service/internal/watermark"
+	"watermark-service/internal"
 	watermarksvc "watermark-service/pkg/watermark"
 	"watermark-service/pkg/watermark/endpoints"
 	"watermark-service/pkg/watermark/transport"
@@ -52,19 +52,22 @@ func main() {
 	f.Close()
 
 	var (
-		grpcAddr         = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
-		httpAddr         = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
-		authSvcAddr      = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
-		watermarkSvcAddr = net.JoinHostPort(cfg.Services.Picture.Host, cfg.Services.Picture.Port)
+		grpcAddr       = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
+		httpAddr       = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
+		authSvcAddr    = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
+		pictureSvcAddr = net.JoinHostPort(cfg.Services.Picture.Host, cfg.Services.Picture.Port)
 	)
-	orm, err := watermark.Init(cfg.DbConnection.Host, cfg.DbConnection.Port, cfg.DbConnection.User, cfg.DbConnection.Database, cfg.DbConnection.Password)
-	if err != nil {
-		logger.Log("FATAL: failed to load db with error ", err.Error())
+	connectionStr := internal.DatabaseConnectionStr{
+		Host:     cfg.DbConnection.Host,
+		Port:     cfg.DbConnection.Port,
+		User:     cfg.DbConnection.User,
+		Database: cfg.DbConnection.Database,
+		Password: cfg.DbConnection.Password,
 	}
 
 	var service watermarksvc.Service
 	{
-		service = watermarksvc.NewService(orm, watermarkSvcAddr, cfg.Cloudinary.Cloud, cfg.Cloudinary.Api, cfg.Cloudinary.Secret)
+		service = watermarksvc.NewService(connectionStr, pictureSvcAddr, cfg.Cloudinary.Cloud, cfg.Cloudinary.Api, cfg.Cloudinary.Secret)
 		service = watermarksvc.AuthMiddleware(authSvcAddr)(service)
 	}
 
