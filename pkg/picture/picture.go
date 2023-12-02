@@ -5,18 +5,19 @@ import (
 	"errors"
 	"image"
 
-	"log/slog"
 	"net/http"
 	"watermark-service/internal"
+
+	"go.uber.org/zap"
 )
 
 type pictureService struct {
-	log *slog.Logger
+	log *zap.Logger
 }
 
 func NewService() Service {
 	return &pictureService{
-		log: slog.Default(),
+		log: zap.L().With(zap.String("Service", "PictureService")),
 	}
 }
 
@@ -32,6 +33,6 @@ func (w *pictureService) Create(ctx context.Context, Image image.Image, logo ima
 }
 
 func (w *pictureService) ServiceStatus(_ context.Context) (int64, error) {
-	w.log.Info("Checking the service health...")
+	w.log.Info("Request", zap.Int("Status", http.StatusOK))
 	return http.StatusOK, nil
 }

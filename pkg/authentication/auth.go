@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"os"
 	"time"
 
 	"strings"
@@ -12,8 +11,8 @@ import (
 	"watermark-service/internal/authentication"
 	auth "watermark-service/internal/authentication"
 
-	"github.com/go-kit/log"
 	jwt "github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 
 	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
@@ -23,13 +22,12 @@ import (
 	"gorm.io/gorm"
 )
 
-var logger log.Logger
-
 type authService struct {
 	ORMInstance *gorm.DB
 	DBAvailable bool
 	Dsn         string
 	SigningKey  []byte
+	log         *zap.Logger
 }
 
 type userClaims struct {
@@ -42,7 +40,13 @@ func NewService(dbConnection internal.DatabaseConnectionStr, signingKey string) 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN: dsn,
 	}))
-	service := &authService{ORMInstance: db, DBAvailable: true, SigningKey: []byte(signingKey), Dsn: dsn}
+	service := &authService{
+		ORMInstance: db,
+		DBAvailable: true,
+		SigningKey:  []byte(signingKey),
+		Dsn:         dsn,
+		log:         zap.L().With(zap.String("Service", "AuthenticationService")),
+	}
 	if err == nil {
 		err = authentication.InitDb(db)
 	}
@@ -66,11 +70,11 @@ func (a *authService) Reconnect() {
 			a.DBAvailable = true
 			break
 		}
-		logger.Log("Reconnect Failed with error: ", err)
-		logger.Log("Attempt to reconnect after ", idleTime, " seconds")
+		a.log.Error("Reconnect", zap.String("Database", "Failed"), zap.Error(err))
+		a.log.Info("Reconnect", zap.String("Database", "Attempt"), zap.Duration("After", idleTime))
 		time.Sleep(idleTime * time.Second)
 	}
-	logger.Log("Reconnected to database: ", a.Dsn)
+	a.log.Info("Reconnect", zap.String("Status", "Success"), zap.String("Connection", a.Dsn))
 }
 
 func (a *authService) Login(ctx context.Context, email, password string) (int64, string) {
@@ -239,9 +243,4 @@ func (a *authService) Disable(ctx context.Context) (bool, *internal.User) {
 
 func (a *authService) ServiceStatus(_ context.Context) (int, error) {
 	return http.StatusOK, nil
-}
-
-func init() {
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }

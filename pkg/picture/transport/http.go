@@ -7,7 +7,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"net/http"
-	"os"
 	"regexp"
 	"watermark-service/internal"
 	"watermark-service/internal/util"
@@ -15,8 +14,6 @@ import (
 	"watermark-service/pkg/picture/endpoints"
 
 	httpkit "github.com/go-kit/kit/transport/http"
-
-	"github.com/go-kit/log"
 )
 
 func NewHTTPHandler(ep endpoints.Set) http.Handler {
@@ -135,11 +132,4 @@ func getImageFromFile(name string, r *http.Request) image.Image {
 		image = nil
 	}
 	return image
-}
-
-var logger log.Logger
-
-func init() {
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }

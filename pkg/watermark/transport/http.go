@@ -7,15 +7,12 @@ import (
 	"image/jpeg"
 	"image/png"
 	"net/http"
-	"os"
 	"regexp"
 	"watermark-service/internal"
 	"watermark-service/internal/util"
 	"watermark-service/pkg/watermark/endpoints"
 
 	httpkit "github.com/go-kit/kit/transport/http"
-
-	"github.com/go-kit/log"
 )
 
 func NewHttpHandler(ep endpoints.Set) http.Handler {
@@ -55,7 +52,6 @@ func NewHttpHandler(ep endpoints.Set) http.Handler {
 func decodeHTTPGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req endpoints.GetRequest
 	if r.ContentLength == 0 {
-		logger.Log("Get request with empty body")
 		return req, nil
 	}
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -169,11 +165,4 @@ func getImageFromFile(name string, r *http.Request) image.Image {
 
 func injectContext(ctx context.Context, r *http.Request) context.Context {
 	return context.WithValue(ctx, "token", r.Header.Get("Token"))
-}
-
-var logger log.Logger
-
-func init() {
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }

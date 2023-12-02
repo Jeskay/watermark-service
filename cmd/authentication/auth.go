@@ -17,39 +17,18 @@ import (
 	proto "watermark-service/api/v1/protos/auth"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
-	"github.com/go-kit/log"
 	"github.com/oklog/oklog/pkg/group"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"gopkg.in/yaml.v3"
 )
 
 var (
-	cfg    config.AuthenticationConfig
-	logger log.Logger
+	cfg config.AuthenticationConfig
 )
 
 func main() {
-	var build bool
-	flag.BoolVar(&build, "built", false, "use context for built executable")
-	flag.Parse()
-	logger.Log(build)
-	var confPath string
-	if build {
-		confPath = "./config/auth_config.yaml"
-	} else {
-		confPath = "../../config/auth_config.yaml"
-	}
-	f, err := os.Open(confPath)
-	if err != nil {
-		logger.Log("FATAL: failed to load config", err.Error())
-	}
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&cfg)
-	if err != nil {
-		logger.Log("FATAL: failed to decode config file", err.Error())
-	}
-	f.Close()
 	var (
 		grpcAddr = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
 		httpAddr = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
@@ -78,30 +57,29 @@ func main() {
 	{
 		httpListener, err := net.Listen("tcp", httpAddr)
 		if err != nil {
-			logger.Log("transport", "HTTP", "during", "Listen", "error", err)
-			os.Exit(1)
+			zap.L().Fatal("transport", zap.String("HTTP", "during Listen"), zap.Error(err))
 		}
 		g.Add(func() error {
-			logger.Log("transport", "HTTP", "addr", httpAddr)
+			zap.L().Info("transport", zap.String("HTTP", "Listener"), zap.String("address", httpAddr))
 			return http.Serve(httpListener, httpHandler)
 		}, func(error) {
+			zap.L().Error("transport", zap.String("HTTP", "listener failed"), zap.Error(err))
 			httpListener.Close()
 		})
 	}
 	{
 		grpcListener, err := net.Listen("tcp", grpcAddr)
 		if err != nil {
-			logger.Log("transport", "gRPC", "during", "Listen", "error", err)
-			os.Exit(1)
+			zap.L().Fatal("transport", zap.String("gRPC", "during Listen"), zap.Error(err))
 		}
 		g.Add(func() error {
-			logger.Log("transport", "gRPC", "addr", grpcAddr)
+			zap.L().Info("transport", zap.String("gRPC", "Listener"), zap.String("address", grpcAddr))
 			baseServer := grpc.NewServer(grpc.UnaryInterceptor(grpckit.Interceptor))
 			reflection.Register(baseServer)
 			proto.RegisterAuthenticationServer(baseServer, grpcServer)
 			return baseServer.Serve(grpcListener)
 		}, func(err error) {
-			logger.Log(err)
+			zap.L().Error("transport", zap.String("gRPC", "listener failed"), zap.Error(err))
 			grpcListener.Close()
 		})
 	}
@@ -120,10 +98,31 @@ func main() {
 			close(cancelInterrupt)
 		})
 	}
-	logger.Log("exit", g.Run())
+	err := g.Run()
+	zap.L().Info("exit", zap.Error(err))
 }
 
 func init() {
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
+
+	var build bool
+	flag.BoolVar(&build, "built", false, "use context for built executable")
+	flag.Parse()
+
+	var confPath string
+	if build {
+		confPath = "./config/auth_config.yaml"
+	} else {
+		confPath = "../../config/auth_config.yaml"
+	}
+	f, err := os.Open(confPath)
+	if err != nil {
+		zap.L().Fatal("Setup failed", zap.String("config", "loading"), zap.Error(err))
+	}
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&cfg)
+	if err != nil {
+		zap.L().Fatal("Setup failed", zap.String("config", "decoding"), zap.Error(err))
+	}
+	f.Close()
 }

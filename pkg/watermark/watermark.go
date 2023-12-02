@@ -5,7 +5,6 @@ import (
 	"errors"
 	"image"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 	pictureproto "watermark-service/api/v1/protos/picture"
@@ -13,14 +12,12 @@ import (
 	"watermark-service/internal/util"
 	"watermark-service/internal/watermark"
 
-	"github.com/go-kit/log"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
-
-var logger log.Logger
 
 type watermarkService struct {
 	ORMInstance      *gorm.DB
@@ -29,6 +26,7 @@ type watermarkService struct {
 	pictureAvailable bool
 	pictureClient    pictureproto.PictureClient
 	storage          watermark.Storage
+	log              *zap.Logger
 }
 
 func NewService(dbConnection internal.DatabaseConnectionStr, pictureServiceAddr string, cloudName, apiKey, secretKey string) *watermarkService {
@@ -42,7 +40,9 @@ func NewService(dbConnection internal.DatabaseConnectionStr, pictureServiceAddr 
 		Dsn:              dsn,
 		storage:          watermark.NewCloudinaryStorage(cloudName, apiKey, secretKey),
 		pictureAvailable: true,
+		log:              zap.L().With(zap.String("Service", "WatermarkService")),
 	}
+
 	if err == nil {
 		err = watermark.InitDb(db)
 	} else {
@@ -53,7 +53,7 @@ func NewService(dbConnection internal.DatabaseConnectionStr, pictureServiceAddr 
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	conn, err := grpc.Dial(pictureServiceAddr, opts...)
 	if err != nil {
-		logger.Log("Dialing", "PictureService", "Failed:", err)
+		service.log.Error("Dialing", zap.String("Dialing", "Picture Service"), zap.Error(err))
 		service.pictureAvailable = false
 	} else {
 		service.pictureClient = pictureproto.NewPictureClient(conn)
@@ -74,11 +74,11 @@ func (w *watermarkService) Reconnect() {
 			w.DBAvailable = true
 			break
 		}
-		logger.Log("Reconnect Failed with error: ", err)
-		logger.Log("Attempt to reconnect after ", idleTime, " seconds")
+		w.log.Error("Reconnect", zap.Error(err))
+		w.log.Info("Reconnect", zap.String("Watermark", "Database"), zap.Duration("after", idleTime))
 		time.Sleep(idleTime * time.Second)
 	}
-	logger.Log("Reconnected", "to:", w.Dsn)
+	w.log.Info("Reconnect", zap.String("Status", "Success"), zap.String("Connection", w.Dsn))
 }
 
 func (d *watermarkService) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
@@ -167,9 +167,4 @@ func (d *watermarkService) Remove(ctx context.Context, ticketId string) (int, er
 
 func (d *watermarkService) ServiceStatus(_ context.Context) (int, error) {
 	return http.StatusOK, nil
-}
-
-func init() {
-	logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 }

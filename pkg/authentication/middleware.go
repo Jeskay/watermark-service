@@ -3,21 +3,26 @@ package authentication
 import (
 	"context"
 	"errors"
-	"log"
 	"watermark-service/internal"
+
+	"go.uber.org/zap"
 )
 
 type Middleware func(Service) Service
 
 func AuthMiddleware() Middleware {
 	return func(next Service) Service {
-		return &authMiddleware{next}
+		return &authMiddleware{
+			next: next,
+			log:  zap.L().With(zap.String("Middleware", "AuthenticationMiddleware")),
+		}
 
 	}
 }
 
 type authMiddleware struct {
 	next Service
+	log  *zap.Logger
 }
 
 func (m *authMiddleware) verifyUser(ctx context.Context) (*internal.User, error) {
@@ -35,7 +40,7 @@ func (m *authMiddleware) verifyUser(ctx context.Context) (*internal.User, error)
 func (m *authMiddleware) Generate(ctx context.Context) (string, string) {
 	user, err := m.verifyUser(ctx)
 	if err != nil {
-		log.Println(err)
+		m.log.Error("Generate", zap.Error(err))
 		return "", ""
 	}
 	return m.next.Generate(context.WithValue(ctx, "user", user))
@@ -44,7 +49,7 @@ func (m *authMiddleware) Generate(ctx context.Context) (string, string) {
 func (m *authMiddleware) Verify(ctx context.Context, token string) (bool, *internal.User) {
 	user, err := m.verifyUser(ctx)
 	if err != nil {
-		log.Println(err)
+		m.log.Error("Generate", zap.Error(err))
 		return false, nil
 	}
 	return m.next.Verify(context.WithValue(ctx, "user", user), token)
@@ -53,7 +58,7 @@ func (m *authMiddleware) Verify(ctx context.Context, token string) (bool, *inter
 func (m *authMiddleware) Disable(ctx context.Context) (bool, *internal.User) {
 	user, err := m.verifyUser(ctx)
 	if err != nil {
-		log.Println(err)
+		m.log.Error("Generate", zap.Error(err))
 		return false, nil
 	}
 	return m.next.Disable(context.WithValue(ctx, "user", user))
