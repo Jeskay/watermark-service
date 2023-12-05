@@ -11,6 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux GO_ARCH=amd64 go build -o picture_service ./cmd/pic
 
 FROM scratch
 COPY --from=builder /app/picture_service ./
+COPY --from=builder /app/var ./var
 
 EXPOSE 8081 8082
 

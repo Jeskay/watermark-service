@@ -11,6 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux GO_ARCH=amd64 go build -o auth_service ./cmd/authen
 
 FROM scratch
 COPY --from=builder /app/auth_service ./
+COPY --from=builder /app/var ./var
 
 EXPOSE 9021 9022
 

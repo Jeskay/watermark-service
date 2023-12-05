@@ -11,6 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux GO_ARCH=amd64 go build -o watermark_service ./cmd/w
 
 FROM scratch
 COPY --from=builder /app/watermark_service ./
+COPY --from=builder /app/var ./var
 
 EXPOSE 9091 9092
 

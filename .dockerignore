@@ -2,3 +2,4 @@ Dockerfile
 .dockerignore
 /vendor
 /.vscode
+/var/logs/*.log

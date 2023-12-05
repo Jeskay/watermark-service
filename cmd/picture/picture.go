@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
+	"time"
 	proto "watermark-service/api/v1/protos/picture"
 	"watermark-service/config"
 	"watermark-service/pkg/picture"
@@ -18,6 +20,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/oklog/oklog/pkg/group"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 )
@@ -90,11 +93,28 @@ func main() {
 }
 
 func init() {
-	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
-
-	var conf string
+	var conf, logf string
 	flag.StringVar(&conf, "config", "", "config file")
+	flag.StringVar(&logf, "log", "./var/logs", "log folder")
 	flag.Parse()
+
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.ISO8601TimeEncoder
+	fileEncoder := zapcore.NewJSONEncoder(config)
+	consoleEncoder := zapcore.NewConsoleEncoder(config)
+
+	filePath := logf + "/log-" + strconv.FormatInt(time.Now().Unix(), 10) + ".log"
+	logFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(fileEncoder, zapcore.AddSync(logFile), zapcore.DebugLevel),
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel),
+	)
+	zap.ReplaceGlobals(zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)))
+
 	if conf == "" {
 		err := envconfig.Process("picture", &cfg)
 		if err != nil {
