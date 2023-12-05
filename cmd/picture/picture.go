@@ -15,6 +15,7 @@ import (
 	"watermark-service/pkg/picture/transport"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/oklog/oklog/pkg/group"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -91,24 +92,25 @@ func main() {
 func init() {
 	zap.ReplaceGlobals(zap.Must(zap.NewProduction()))
 
-	var build bool
-	flag.BoolVar(&build, "built", false, "use context for built executable")
+	var conf string
+	flag.StringVar(&conf, "config", "", "config file")
 	flag.Parse()
-
-	var confPath string
-	if build {
-		confPath = "./config/picture_config.yaml"
+	if conf == "" {
+		err := envconfig.Process("picture", &cfg)
+		if err != nil {
+			zap.L().Fatal("Setup failed", zap.String("config", "loading"), zap.Error(err))
+		}
 	} else {
-		confPath = "../../config/picture_config.yaml"
+		f, err := os.Open(conf)
+		if err != nil {
+			zap.L().Fatal("Setup failed", zap.String("config", "loading"), zap.Error(err))
+		}
+		decoder := yaml.NewDecoder(f)
+		err = decoder.Decode(&cfg)
+		if err != nil {
+			zap.L().Fatal("Setup failed", zap.String("config", "decoding"), zap.Error(err))
+		}
+		f.Close()
 	}
-	f, err := os.Open(confPath)
-	if err != nil {
-		zap.L().Fatal("Setup failed", zap.String("config", "loading"), zap.Error(err))
-	}
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&cfg)
-	if err != nil {
-		zap.L().Fatal("Setup failed", zap.String("config", "decoding"), zap.Error(err))
-	}
-	f.Close()
+
 }

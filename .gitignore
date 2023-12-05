@@ -1,4 +1,4 @@
 /vendor
 /config/*.yml
 /config/*.yaml
-/.vscode
+.vscode/
