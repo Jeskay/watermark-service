@@ -8,6 +8,7 @@ import (
 	"watermark-service/pkg/watermark"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/kit/tracing/opentracing"
 )
 
 type Set struct {
@@ -27,7 +28,7 @@ func NewEndpointSet(svc watermark.Service) Set {
 }
 
 func MakeGetEndpoint(svc watermark.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	endpoint := func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(GetRequest)
 		docs, err := svc.Get(ctx, req.Filters...)
 		if err != nil {
@@ -36,10 +37,11 @@ func MakeGetEndpoint(svc watermark.Service) endpoint.Endpoint {
 
 		return GetResponse{Documents: docs, Err: ""}, nil
 	}
+	return opentracing.TraceServer(internal.Tracer, "Get method")(endpoint)
 }
 
 func MakeAddEndpoint(svc watermark.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	endpoint := func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(AddRequest)
 		ticketID, err := svc.Add(ctx, req.Logo, req.Image, req.Text, req.Fill, req.Pos)
 		if err != nil {
@@ -47,10 +49,11 @@ func MakeAddEndpoint(svc watermark.Service) endpoint.Endpoint {
 		}
 		return AddResponse{TicketID: ticketID}, nil
 	}
+	return opentracing.TraceServer(internal.Tracer, "Add method")(endpoint)
 }
 
 func MakeRemoveEndpoint(svc watermark.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	endpoint := func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(RemoveRequest)
 		code, err := svc.Remove(ctx, req.TicketID)
 		if err != nil {
@@ -58,10 +61,11 @@ func MakeRemoveEndpoint(svc watermark.Service) endpoint.Endpoint {
 		}
 		return RemoveResponse{Code: code, Err: ""}, nil
 	}
+	return opentracing.TraceServer(internal.Tracer, "Remove method")(endpoint)
 }
 
 func MakeServiceStatusEndpoint(svc watermark.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	endpoint := func(ctx context.Context, request interface{}) (interface{}, error) {
 		_ = request.(ServiceStatusRequest)
 		code, err := svc.ServiceStatus(ctx)
 		if err != nil {
@@ -69,6 +73,7 @@ func MakeServiceStatusEndpoint(svc watermark.Service) endpoint.Endpoint {
 		}
 		return ServiceStatusResponse{Code: code, Err: ""}, nil
 	}
+	return opentracing.TraceServer(internal.Tracer, "ServiceStatus method")(endpoint)
 }
 
 func (s *Set) Get(ctx context.Context, filters ...internal.Filter) ([]internal.Document, error) {

@@ -37,6 +37,7 @@ func main() {
 		httpAddr       = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
 		authSvcAddr    = net.JoinHostPort(cfg.Services.Auth.Host, cfg.Services.Auth.Port)
 		pictureSvcAddr = net.JoinHostPort(cfg.Services.Picture.Host, cfg.Services.Picture.Port)
+		tracingAddr    = net.JoinHostPort(cfg.JaegerAddress.Host, cfg.JaegerAddress.Port)
 	)
 	connectionStr := internal.DatabaseConnectionStr{
 		Host:     cfg.DbConnection.Host,
@@ -45,6 +46,12 @@ func main() {
 		Database: cfg.DbConnection.Database,
 		Password: cfg.DbConnection.Password,
 	}
+
+	closer, err := internal.InitTracer("WatermarkSvc", tracingAddr)
+	if err != nil {
+		zap.L().Fatal("transport", zap.String("Tracer", "Init failed"), zap.Error(err))
+	}
+	defer closer.Close()
 
 	var service watermarksvc.Service
 	{
@@ -101,7 +108,7 @@ func main() {
 			close(cancelInterrupt)
 		})
 	}
-	err := g.Run()
+	err = g.Run()
 	zap.L().Info("exit", zap.Error(err))
 }
 

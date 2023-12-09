@@ -13,7 +13,11 @@ import (
 	"watermark-service/pkg/picture"
 	"watermark-service/pkg/picture/endpoints"
 
+	zapkit "github.com/go-kit/kit/log/zap"
+	"github.com/go-kit/kit/tracing/opentracing"
 	httpkit "github.com/go-kit/kit/transport/http"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func NewHTTPHandler(ep endpoints.Set) http.Handler {
@@ -23,12 +27,26 @@ func NewHTTPHandler(ep endpoints.Set) http.Handler {
 		ep.CreateEndpoint,
 		decodeHTTPCreateRequest,
 		encodeCreateResponse,
-		httpkit.ServerBefore(extractImages),
+		httpkit.ServerBefore(
+			extractImages,
+			opentracing.HTTPToContext(
+				internal.Tracer,
+				"Create method",
+				zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel),
+			),
+		),
 	))
 	m.Handle("/healthz", httpkit.NewServer(
 		ep.ServiceStatusEndpoint,
 		decodeHTTPServiceStatusRequest,
 		encodeResponse,
+		httpkit.ServerBefore(
+			opentracing.HTTPToContext(
+				internal.Tracer,
+				"ServiceStatus method",
+				zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel),
+			),
+		),
 	))
 	return m
 }

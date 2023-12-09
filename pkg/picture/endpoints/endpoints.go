@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"image"
+	"watermark-service/internal"
 	"watermark-service/pkg/picture"
 
 	"github.com/go-kit/kit/endpoint"
+	"github.com/go-kit/kit/tracing/opentracing"
 )
 
 type Set struct {
@@ -22,7 +24,7 @@ func NewEndpointSet(svc picture.Service) Set {
 }
 
 func MakeCreateEndpoint(svc picture.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	endpoint := func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(CreateRequest)
 		code, err := svc.Create(ctx, req.Image, req.Logo, req.Text, req.Fill, req.Pos)
 		if err != nil {
@@ -30,10 +32,11 @@ func MakeCreateEndpoint(svc picture.Service) endpoint.Endpoint {
 		}
 		return CreateResponse{code, ""}, nil
 	}
+	return opentracing.TraceServer(internal.Tracer, "Create method")(endpoint)
 }
 
 func MakeServiceStatusEndpoint(svc picture.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	endpoint := func(ctx context.Context, request interface{}) (interface{}, error) {
 		_ = request.(ServiceStatusRequest)
 		code, err := svc.ServiceStatus(ctx)
 		if err != nil {
@@ -41,6 +44,7 @@ func MakeServiceStatusEndpoint(svc picture.Service) endpoint.Endpoint {
 		}
 		return ServiceStatusResponse{Code: code, Err: ""}, nil
 	}
+	return opentracing.TraceServer(internal.Tracer, "ServiceStatus method")(endpoint)
 }
 
 func (s *Set) Create(ctx context.Context) (image.Image, error) {

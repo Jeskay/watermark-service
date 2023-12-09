@@ -7,6 +7,7 @@ require (
 	github.com/go-kit/kit v0.13.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.1
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/oklog/oklog v0.3.2
 	github.com/pquerna/otp v1.4.0
 	go.uber.org/zap v1.26.0
@@ -16,7 +17,14 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.4
-	github.com/kelseyhightower/envconfig v1.4.0
+)
+
+require (
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
+	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
+	go.uber.org/atomic v1.9.0 // indirect
 )
 
 require (

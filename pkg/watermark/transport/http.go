@@ -12,15 +12,15 @@ import (
 	"watermark-service/internal/util"
 	"watermark-service/pkg/watermark/endpoints"
 
+	zapkit "github.com/go-kit/kit/log/zap"
+	"github.com/go-kit/kit/tracing/opentracing"
 	httpkit "github.com/go-kit/kit/transport/http"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func NewHttpHandler(ep endpoints.Set) http.Handler {
 	m := http.NewServeMux()
-
-	opts := []httpkit.ServerOption{
-		httpkit.ServerBefore(injectContext),
-	}
 
 	m.Handle("/healthz", httpkit.NewServer(
 		ep.ServiceStatusEndpoint,
@@ -31,19 +31,29 @@ func NewHttpHandler(ep endpoints.Set) http.Handler {
 		ep.AddEndpoint,
 		decodeHTTPAddRequest,
 		encodeResponse,
-		httpkit.ServerBefore(injectContext, extractImages),
+		httpkit.ServerBefore(
+			injectContext,
+			extractImages,
+			opentracing.HTTPToContext(internal.Tracer, "Add method", zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel)),
+		),
 	))
 	m.Handle("/get", httpkit.NewServer(
 		ep.GetEndpoint,
 		decodeHTTPGetRequest,
 		encodeResponse,
-		opts...,
+		httpkit.ServerBefore(
+			injectContext,
+			opentracing.HTTPToContext(internal.Tracer, "Get method", zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel)),
+		),
 	))
 	m.Handle("/remove", httpkit.NewServer(
 		ep.RemoveEndpoint,
 		decodeHTTPRemoveRequest,
 		encodeResponse,
-		opts...,
+		httpkit.ServerBefore(
+			injectContext,
+			opentracing.HTTPToContext(internal.Tracer, "Remove method", zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel)),
+		),
 	))
 
 	return m

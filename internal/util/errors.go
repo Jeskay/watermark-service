@@ -9,3 +9,10 @@ var (
 
 	ErrDatabaseServiceUnavailable = errors.New("database service unavailable")
 )
+
+func FromString(s string) error {
+	if s == "" {
+		return nil
+	}
+	return errors.New(s)
+}

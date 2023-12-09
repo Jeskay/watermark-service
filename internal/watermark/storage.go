@@ -1,17 +1,18 @@
 package watermark
 
 import (
-	"bytes"
 	"context"
 	"errors"
+	"io"
 	"regexp"
+	"watermark-service/internal"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
 type Storage interface {
-	Upload(ctx context.Context, name string, image []byte) (string, error)
+	Upload(ctx context.Context, name string, image io.Reader) (string, error)
 	Delete(ctx context.Context, id string) error
 }
 
@@ -27,10 +28,10 @@ func NewCloudinaryStorage(cloud, apiKey, secretKey string) *CloudinaryStorage {
 	return &CloudinaryStorage{instance: cld}
 }
 
-func (s *CloudinaryStorage) Upload(ctx context.Context, name string, image []byte) (string, error) {
-	buf := new(bytes.Buffer)
-	buf.Write(image)
-	res, err := s.instance.Upload.Upload(ctx, buf, uploader.UploadParams{})
+func (s *CloudinaryStorage) Upload(ctx context.Context, name string, image io.Reader) (string, error) {
+	span := internal.StartSpan("Cloudinary upload", ctx)
+	defer span.Finish()
+	res, err := s.instance.Upload.Upload(ctx, image, uploader.UploadParams{})
 	if err != nil {
 		return "", err
 	}

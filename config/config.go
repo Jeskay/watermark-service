@@ -50,6 +50,10 @@ type WatermarkConfig struct {
 			Host string `yaml:"host" envconfig:"PICTURE_HOST"`
 		} `yaml:"picture"`
 	} `yaml:"services"`
+	JaegerAddress struct {
+		Port string `yaml:"port" envconfig:"JAEGER_PORT"`
+		Host string `yaml:"host" envconfig:"JAEGER_HOST"`
+	} `yaml:"jaeger"`
 }
 
 type PictureConfig struct {
@@ -61,4 +65,8 @@ type PictureConfig struct {
 		Port string `yaml:"port" envconfig:"GRPC_PORT"`
 		Host string `yaml:"host" envconfig:"GRPC_HOST"`
 	} `yaml:"grpc"`
+	JaegerAddress struct {
+		Port string `yaml:"port" envconfig:"JAEGER_PORT"`
+		Host string `yaml:"host" envconfig:"JAEGER_HOST"`
+	} `yaml:"jaeger"`
 }

@@ -1,17 +1,20 @@
 package watermark
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"image"
+	"image/png"
 	"net/http"
 	"strings"
 	"time"
-	pictureproto "watermark-service/api/v1/protos/picture"
 	"watermark-service/internal"
-	"watermark-service/internal/util"
 	"watermark-service/internal/watermark"
+	pictureService "watermark-service/pkg/picture"
+	pictureTransport "watermark-service/pkg/picture/transport"
 
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -24,7 +27,7 @@ type watermarkService struct {
 	DBAvailable      bool
 	Dsn              string
 	pictureAvailable bool
-	pictureClient    pictureproto.PictureClient
+	pictureClient    pictureService.Service
 	storage          watermark.Storage
 	log              *zap.Logger
 }
@@ -49,14 +52,15 @@ func NewService(dbConnection internal.DatabaseConnectionStr, pictureServiceAddr 
 		service.DBAvailable = false
 		go service.Reconnect()
 	}
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(pictureServiceAddr, opts...)
+	conn, err := grpc.Dial(
+		pictureServiceAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		service.log.Error("Dialing", zap.String("Dialing", "Picture Service"), zap.Error(err))
 		service.pictureAvailable = false
 	} else {
-		service.pictureClient = pictureproto.NewPictureClient(conn)
+		service.pictureClient = pictureTransport.NewGRPCClient(conn)
 	}
 	return service
 }
@@ -82,26 +86,33 @@ func (w *watermarkService) Reconnect() {
 }
 
 func (d *watermarkService) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {
+	span := internal.StartSpan("Add", ctx)
+	defer span.Finish()
 	claimedUser, ok := ctx.Value("user").(*internal.User)
 	if !ok {
 		return "", nil
 	}
-	data := util.ImageToBytes(logo, ".png")
-	Logo := &pictureproto.Image{Data: data, Type: ".png"}
-	data = util.ImageToBytes(image, ".png")
-	Image := &pictureproto.Image{Data: data, Type: ".png"}
-	resp, err := d.pictureClient.Create(ctx, &pictureproto.CreateRequest{
-		Logo:  Logo,
-		Image: Image,
-		Text:  text,
-		Fill:  fill,
-		Pos:   pictureproto.Position(pictureproto.Position_value[string(pos)]),
-	})
-	if err != nil || resp.Err != "" {
+	resImg, err := d.pictureClient.Create(
+		opentracing.ContextWithSpan(ctx, span),
+		image,
+		logo,
+		text,
+		fill,
+		pos,
+	)
+	if err != nil {
+		d.log.Error("Picture Service", zap.String("Create request", "failed"), zap.Error(err))
 		return "", err
 	}
-	url, err := d.storage.Upload(ctx, "text.png", resp.Image)
+	buf := new(bytes.Buffer)
+	err = png.Encode(buf, resImg)
 	if err != nil {
+		d.log.Error("Image encoding", zap.String("Status", "failed"), zap.Error(err))
+		return "", err
+	}
+	url, err := d.storage.Upload(ctx, "text.png", buf)
+	if err != nil {
+		d.log.Error("Storage", zap.String("image upload", "failed"), zap.Error(err))
 		return "", nil
 	}
 	newDoc := watermark.Document{

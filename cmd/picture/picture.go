@@ -12,6 +12,7 @@ import (
 	"time"
 	proto "watermark-service/api/v1/protos/picture"
 	"watermark-service/config"
+	"watermark-service/internal"
 	"watermark-service/pkg/picture"
 	"watermark-service/pkg/picture/endpoints"
 	"watermark-service/pkg/picture/transport"
@@ -31,9 +32,17 @@ var (
 
 func main() {
 	var (
-		httpAddr = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
-		grpcAddr = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
+		httpAddr    = net.JoinHostPort(cfg.HTTPAddress.Host, cfg.HTTPAddress.Port)
+		grpcAddr    = net.JoinHostPort(cfg.GRPCAddress.Host, cfg.GRPCAddress.Port)
+		tracingAddr = net.JoinHostPort(cfg.JaegerAddress.Host, cfg.JaegerAddress.Port)
 	)
+
+	closer, err := internal.InitTracer("PictureSvc", tracingAddr)
+	if err != nil {
+		zap.L().Fatal("transport", zap.String("Tracer", "Init failed"), zap.Error(err))
+	}
+	defer closer.Close()
+
 	var service picture.Service
 	{
 		service = picture.NewService()
@@ -88,7 +97,7 @@ func main() {
 			close(cancelInterrupt)
 		})
 	}
-	err := g.Run()
+	err = g.Run()
 	zap.L().Info("exit", zap.Error(err))
 }
 

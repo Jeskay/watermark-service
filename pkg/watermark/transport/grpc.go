@@ -7,7 +7,11 @@ import (
 	"watermark-service/internal/util"
 	"watermark-service/pkg/watermark/endpoints"
 
+	zapkit "github.com/go-kit/kit/log/zap"
+	"github.com/go-kit/kit/tracing/opentracing"
 	grpckit "github.com/go-kit/kit/transport/grpc"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type grpcServer struct {
@@ -19,11 +23,40 @@ type grpcServer struct {
 }
 
 func NewGRPCServer(ep endpoints.Set) watermark.WatermarkServer {
+	logger := zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel)
 	return &grpcServer{
-		get:           grpckit.NewServer(ep.GetEndpoint, decodeGRPCGetRequest, encodeGRPCGetResponse),
-		add:           grpckit.NewServer(ep.AddEndpoint, decodeGRPCAddRequest, encodeGRPCAddResponse),
-		remove:        grpckit.NewServer(ep.RemoveEndpoint, decodeGRPCRemoveRequest, encodeGRPCRemoveResponse),
-		serviceStatus: grpckit.NewServer(ep.ServiceStatusEndpoint, decodeGRPCServiceStatusRequest, encodeGRPCServiceStatusResponse),
+		get: grpckit.NewServer(
+			ep.GetEndpoint,
+			decodeGRPCGetRequest,
+			encodeGRPCGetResponse,
+			grpckit.ServerBefore(
+				opentracing.GRPCToContext(internal.Tracer, "Get method", logger),
+			),
+		),
+		add: grpckit.NewServer(
+			ep.AddEndpoint,
+			decodeGRPCAddRequest,
+			encodeGRPCAddResponse,
+			grpckit.ServerBefore(
+				opentracing.GRPCToContext(internal.Tracer, "Add method", zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel)),
+			),
+		),
+		remove: grpckit.NewServer(
+			ep.RemoveEndpoint,
+			decodeGRPCRemoveRequest,
+			encodeGRPCRemoveResponse,
+			grpckit.ServerBefore(
+				opentracing.GRPCToContext(internal.Tracer, "Remove method", zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel)),
+			),
+		),
+		serviceStatus: grpckit.NewServer(
+			ep.ServiceStatusEndpoint,
+			decodeGRPCServiceStatusRequest,
+			encodeGRPCServiceStatusResponse,
+			grpckit.ServerBefore(
+				opentracing.GRPCToContext(internal.Tracer, "ServiceStatus method", zapkit.NewZapSugarLogger(zap.L(), zapcore.DebugLevel)),
+			),
+		),
 	}
 }
 
