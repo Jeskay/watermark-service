@@ -14,7 +14,6 @@ import (
 	jwt "github.com/golang-jwt/jwt/v4"
 	"go.uber.org/zap"
 
-	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 
@@ -110,10 +109,10 @@ func (a *authService) Login(ctx context.Context, email, password string) (int64,
 	return http.StatusAccepted, signedToken
 }
 
-func (a *authService) Register(_ context.Context, email, name, password string) (string, error) {
+func (a *authService) Register(_ context.Context, email, name, password string) (int32, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), 8)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	newUser := auth.User{
 		Name:     name,
@@ -122,11 +121,11 @@ func (a *authService) Register(_ context.Context, email, name, password string) 
 	}
 	result := a.ORMInstance.Create(&newUser)
 	if result.Error != nil && strings.Contains(result.Error.Error(), "duplicate key value violates unique") {
-		return "", errors.New("User already exists")
+		return 0, errors.New("User already exists")
 	} else if result.Error != nil {
-		return "", errors.New(result.Error.Error())
+		return 0, errors.New(result.Error.Error())
 	}
-	return newUser.ID.String(), nil
+	return newUser.ID, nil
 }
 
 func (a *authService) Generate(ctx context.Context) (string, string) {
@@ -206,14 +205,9 @@ func (a *authService) VerifyJwt(_ context.Context, tokenString string) (bool, *i
 	return false, nil
 }
 
-func (a *authService) Validate(_ context.Context, userID, token string) bool {
+func (a *authService) Validate(_ context.Context, userID int32, token string) bool {
 	var user auth.User
-	var unmarshalled uuid.UUID
-	err := unmarshalled.UnmarshalBinary([]byte(userID))
-	if err != nil {
-		return false
-	}
-	result := a.ORMInstance.First(&user, "id = ?", unmarshalled)
+	result := a.ORMInstance.First(&user, "id = ?", userID)
 	if result.Error != nil {
 		return false
 	}

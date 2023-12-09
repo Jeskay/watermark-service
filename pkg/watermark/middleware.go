@@ -8,7 +8,6 @@ import (
 	authproto "watermark-service/api/v1/protos/auth"
 	"watermark-service/internal"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -58,13 +57,8 @@ func (m *authMiddleware) verifyUser(ctx context.Context) (*internal.User, error)
 	if !resp.Verified {
 		return nil, errors.New("Invalid token")
 	}
-	var id uuid.UUID
-	err = id.UnmarshalBinary(resp.User.Id)
-	if err != nil {
-		return nil, err
-	}
 	return &internal.User{
-		ID:         id,
+		ID:         resp.User.Id,
 		Name:       resp.User.Name,
 		Email:      resp.User.Email,
 		OtpEnabled: resp.User.OtpEnabled,

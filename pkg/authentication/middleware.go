@@ -64,7 +64,7 @@ func (m *authMiddleware) Disable(ctx context.Context) (bool, *internal.User) {
 	return m.next.Disable(context.WithValue(ctx, "user", user))
 }
 
-func (m *authMiddleware) Validate(ctx context.Context, userId, token string) bool {
+func (m *authMiddleware) Validate(ctx context.Context, userId int32, token string) bool {
 	return m.next.Validate(ctx, userId, token)
 }
 
@@ -75,7 +75,7 @@ func (m *authMiddleware) Login(ctx context.Context, email, password string) (int
 	return m.next.Login(ctx, email, password)
 }
 
-func (m *authMiddleware) Register(ctx context.Context, email, name, password string) (string, error) {
+func (m *authMiddleware) Register(ctx context.Context, email, name, password string) (int32, error) {
 	return m.next.Register(ctx, email, name, password)
 }
 

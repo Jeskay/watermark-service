@@ -6,7 +6,7 @@ import (
 
 type Document struct {
 	ID       uuid.UUID `json:"id"`
-	AuthorId uuid.UUID `json:"author_id"`
+	AuthorId int32     `json:"author_id"`
 	Title    string    `json:"title"`
 	ImageUrl string    `json:"image_url"`
 }

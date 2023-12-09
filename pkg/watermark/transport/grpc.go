@@ -129,13 +129,9 @@ func encodeGRPCGetResponse(_ context.Context, grpcResponse interface{}) (interfa
 		if err != nil {
 			return nil, err
 		}
-		author_id, err := d.AuthorId.MarshalBinary()
-		if err != nil {
-			return nil, err
-		}
 		doc := watermark.Document{
 			TicketId: ticket_id,
-			AuthorId: author_id,
+			AuthorId: d.AuthorId,
 			Title:    d.Title,
 			ImageUrl: d.ImageUrl,
 		}

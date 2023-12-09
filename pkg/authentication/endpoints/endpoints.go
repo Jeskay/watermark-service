@@ -112,7 +112,7 @@ func (s *Set) Login(ctx context.Context, email, password string) (int64, string)
 	return loginResp.Status, loginResp.Token
 }
 
-func (s *Set) Register(ctx context.Context, email, name, password string) (string, error) {
+func (s *Set) Register(ctx context.Context, email, name, password string) (int32, error) {
 	resp, err := s.RegisterEndpoint(ctx, RegisterRequest{Email: email, Name: name, Password: password})
 	registerResp := resp.(RegisterResponse)
 	if err != nil {
@@ -124,7 +124,7 @@ func (s *Set) Register(ctx context.Context, email, name, password string) (strin
 	return registerResp.UserId, nil
 }
 
-func (s *Set) Generate(ctx context.Context, userId string) (string, string, error) {
+func (s *Set) Generate(ctx context.Context, userId int32) (string, string, error) {
 	resp, err := s.GenerateEndpoint(ctx, GenerateRequest{})
 	generateResp := resp.(GenerateResponse)
 	if err != nil {
@@ -142,7 +142,7 @@ func (s *Set) Verify(ctx context.Context, token string) (bool, *internal.User) {
 	return verifyResp.OtpVerified, verifyResp.User
 }
 
-func (s *Set) Validate(ctx context.Context, userId, token string) bool {
+func (s *Set) Validate(ctx context.Context, userId int32, token string) bool {
 	resp, err := s.ValidateEndpoint(ctx, ValidateRequest{UserId: userId, Token: token})
 	validateResp := resp.(ValidateResponse)
 	if err != nil {

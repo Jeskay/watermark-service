@@ -14,7 +14,7 @@ service watermark {
 }
 
 message Document {
-    bytes author_id = 1;
+    int32 author_id = 1;
     bytes ticket_id = 2;
     string title = 3;
     string image_url = 4;

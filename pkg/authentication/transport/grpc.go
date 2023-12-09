@@ -6,7 +6,6 @@ import (
 	"watermark-service/pkg/authentication/endpoints"
 
 	grpckit "github.com/go-kit/kit/transport/grpc"
-	"github.com/google/uuid"
 )
 
 type grpcServer struct {
@@ -122,15 +121,7 @@ func encodeGRPCLoginResponse(_ context.Context, grpcResponse interface{}) (inter
 
 func encodeGRPCRegisterResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
 	response := grpcResponse.(endpoints.RegisterResponse)
-	user_uuid, err := uuid.Parse(response.UserId)
-	if err != nil {
-		return nil, err
-	}
-	user_id, err := user_uuid.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
-	return &auth.RegisterResponse{UserId: user_id, Error: ""}, nil
+	return &auth.RegisterResponse{UserId: response.UserId, Error: ""}, nil
 }
 
 func encodeGRPCGenerateResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
@@ -140,12 +131,8 @@ func encodeGRPCGenerateResponse(_ context.Context, grpcResponse interface{}) (in
 
 func encodeGRPCVerifyResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
 	response := grpcResponse.(endpoints.VerifyTwoFactorResponse)
-	userId, err := response.User.ID.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
 	user := auth.User{
-		Id:         userId,
+		Id:         response.User.ID,
 		Name:       response.User.Name,
 		Email:      response.User.Email,
 		OtpEnabled: response.User.OtpEnabled,
@@ -155,12 +142,8 @@ func encodeGRPCVerifyResponse(_ context.Context, grpcResponse interface{}) (inte
 
 func encodeGRPCVerifyJwtResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
 	response := grpcResponse.(endpoints.VerifyJwtResponse)
-	userId, err := response.User.ID.MarshalBinary()
-	if err != nil {
-		return nil, err
-	}
 	user := auth.User{
-		Id:         userId,
+		Id:         response.User.ID,
 		Name:       response.User.Name,
 		Email:      response.User.Email,
 		OtpEnabled: response.User.OtpEnabled,

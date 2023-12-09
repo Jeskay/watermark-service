@@ -20,7 +20,7 @@ type VerifyTwoFactorRequest struct {
 }
 
 type ValidateRequest struct {
-	UserId string `json:"user_id"`
+	UserId int32  `json:"user_id"`
 	Token  string `json:"token"`
 }
 
@@ -30,7 +30,7 @@ type VerifyJwtRequest struct {
 
 type DisableRequest struct{}
 type RegisterResponse struct {
-	UserId string `json:"userId"`
+	UserId int32  `json:"userId"`
 	Err    string `json:"err,omitempty"`
 }
 

@@ -17,7 +17,7 @@ service authentication {
 
 message User {
     string email = 1;
-    bytes id = 2;
+    int32 id = 2;
     string name = 3;
     bool otp_enabled = 4;
     bool otp_verified = 5;
@@ -31,7 +31,7 @@ message RegisterRequest {
 
 message RegisterResponse {
     string error = 1;
-    bytes user_id = 2;
+    int32 user_id = 2;
 }
 
 message LoginRequest {
