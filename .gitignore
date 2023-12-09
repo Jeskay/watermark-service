@@ -4,3 +4,4 @@
 docker-compose.yaml
 /var/logs/*.log
 .vscode/*
+.vscode/launch.json
