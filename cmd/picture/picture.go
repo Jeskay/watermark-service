@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 	proto "watermark-service/api/v1/protos/picture"
@@ -112,7 +111,7 @@ func init() {
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	consoleEncoder := zapcore.NewConsoleEncoder(config)
 
-	filePath := logf + "/log-" + strconv.FormatInt(time.Now().Unix(), 10) + ".log"
+	filePath := logf + "/log-picture-" + time.Now().Local().Format("Jan-2-2006-15-04-05-99999999") + ".log"
 	logFile, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		panic(err)

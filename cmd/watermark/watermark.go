@@ -123,7 +123,7 @@ func init() {
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	consoleEncoder := zapcore.NewConsoleEncoder(config)
 
-	filePath := logf + "/log-" + time.Now().String() + ".log"
+	filePath := logf + "/log-watermark-" + time.Now().Local().Format("Jan-2-2006-15-04-05-99999999") + ".log"
 	logFile, _ := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	core := zapcore.NewTee(
