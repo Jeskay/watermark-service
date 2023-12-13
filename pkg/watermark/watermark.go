@@ -46,9 +46,8 @@ func NewService(dbConnection internal.DatabaseConnectionStr, pictureServiceAddr 
 		log:              zap.L().With(zap.String("Service", "WatermarkService")),
 	}
 
-	if err == nil {
-		err = watermark.InitDb(db)
-	} else {
+	if err != nil || watermark.InitDb(db) != nil {
+		service.log.Error("Connect", zap.String("Database", "Failed"), zap.Error(err))
 		service.DBAvailable = false
 		go service.Reconnect()
 	}

@@ -5,8 +5,9 @@ import (
 	"errors"
 	"image"
 	"net/http"
-	authproto "watermark-service/api/v1/protos/auth"
 	"watermark-service/internal"
+	authService "watermark-service/pkg/authentication"
+	authTransport "watermark-service/pkg/authentication/transport"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -28,7 +29,7 @@ func AuthMiddleware(authServiceAddr string) Middleware {
 				authAvailable: false,
 			}
 		}
-		c := authproto.NewAuthenticationClient(conn)
+		c := authTransport.NewGRPCClient(conn)
 		return &authMiddleware{
 			next:          next,
 			authClient:    c,
@@ -41,28 +42,20 @@ func AuthMiddleware(authServiceAddr string) Middleware {
 type authMiddleware struct {
 	next          Service
 	authAvailable bool
-	authClient    authproto.AuthenticationClient
+	authClient    authService.Service
 	log           *zap.Logger
 }
 
 func (m *authMiddleware) verifyUser(ctx context.Context) (*internal.User, error) {
 	token, ok := ctx.Value("token").(string)
 	if !ok {
-		return nil, errors.New("Empty header")
+		return nil, errors.New("empty header")
 	}
-	resp, err := m.authClient.VerifyJwt(ctx, &authproto.VerifyJwtRequest{Token: token})
-	if err != nil {
-		return nil, err
+	verified, user := m.authClient.VerifyJwt(ctx, token)
+	if !verified {
+		return nil, errors.New("invalid token")
 	}
-	if !resp.Verified {
-		return nil, errors.New("Invalid token")
-	}
-	return &internal.User{
-		ID:         resp.User.Id,
-		Name:       resp.User.Name,
-		Email:      resp.User.Email,
-		OtpEnabled: resp.User.OtpEnabled,
-	}, nil
+	return user, nil
 }
 
 func (m *authMiddleware) Add(ctx context.Context, logo image.Image, image image.Image, text string, fill bool, pos internal.Position) (string, error) {

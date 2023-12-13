@@ -3,88 +3,9 @@ package transport
 import (
 	"context"
 	"watermark-service/api/v1/protos/auth"
+	"watermark-service/internal"
 	"watermark-service/pkg/authentication/endpoints"
-
-	grpckit "github.com/go-kit/kit/transport/grpc"
 )
-
-type grpcServer struct {
-	login         grpckit.Handler
-	register      grpckit.Handler
-	generate      grpckit.Handler
-	verify        grpckit.Handler
-	verifyJwt     grpckit.Handler
-	validate      grpckit.Handler
-	serviceStatus grpckit.Handler
-	auth.UnimplementedAuthenticationServer
-}
-
-func NewGRPCServer(ep endpoints.Set) auth.AuthenticationServer {
-	return &grpcServer{
-		login:         grpckit.NewServer(ep.LoginEndpoint, decodeGRPCLoginRequest, encodeGRPCLoginResponse),
-		register:      grpckit.NewServer(ep.RegisterEndpoint, decodeGRPCRegisterRequest, encodeGRPCRegisterResponse),
-		generate:      grpckit.NewServer(ep.GenerateEndpoint, decodeGRPCGenerateRequest, encodeGRPCGenerateResponse),
-		verify:        grpckit.NewServer(ep.VerifyTwoFactorEndpoint, decodeGRPCVerifyRequest, encodeGRPCVerifyResponse),
-		verifyJwt:     grpckit.NewServer(ep.VerifyJwtEndpoint, decodeGRPCVerifyJwtRequest, encodeGRPCVerifyJwtResponse),
-		serviceStatus: grpckit.NewServer(ep.ServiceStatusEndpoint, decodeGRPCServiceStatusRequest, encodeGRPCServiceStatusResponse),
-	}
-}
-
-func (g *grpcServer) Login(ctx context.Context, r *auth.LoginRequest) (*auth.LoginResponse, error) {
-	_, resp, err := g.login.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*auth.LoginResponse), nil
-}
-
-func (g *grpcServer) Register(ctx context.Context, r *auth.RegisterRequest) (*auth.RegisterResponse, error) {
-	_, resp, err := g.register.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*auth.RegisterResponse), nil
-}
-
-func (g *grpcServer) Generate(ctx context.Context, r *auth.GenerateRequest) (*auth.GenerateResponse, error) {
-	_, resp, err := g.generate.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*auth.GenerateResponse), nil
-}
-
-func (g *grpcServer) Verify(ctx context.Context, r *auth.VerifyRequest) (*auth.VerifyResponse, error) {
-	_, resp, err := g.verify.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*auth.VerifyResponse), nil
-}
-
-func (g *grpcServer) VerifyJwt(ctx context.Context, r *auth.VerifyJwtRequest) (*auth.VerifyJwtResponse, error) {
-	_, resp, err := g.verifyJwt.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*auth.VerifyJwtResponse), nil
-}
-
-func (g *grpcServer) Validate(ctx context.Context, r *auth.ValidateRequest) (*auth.ValidateResponse, error) {
-	_, resp, err := g.validate.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*auth.ValidateResponse), nil
-}
-
-func (g *grpcServer) ServiceStatus(ctx context.Context, r *auth.ServiceStatusRequest) (*auth.ServiceStatusResponse, error) {
-	_, resp, err := g.serviceStatus.ServeGRPC(ctx, r)
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*auth.ServiceStatusResponse), nil
-}
 
 func decodeGRPCLoginRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	req := grpcReq.(*auth.LoginRequest)
@@ -112,6 +33,76 @@ func decodeGRPCVerifyJwtRequest(_ context.Context, grpcReq interface{}) (interfa
 
 func decodeGRPCServiceStatusRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
 	return endpoints.ServiceStatusRequest{}, nil
+}
+
+func decodeGRPCRegisterResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
+	resp := grpcResp.(*auth.RegisterResponse)
+	return &endpoints.RegisterResponse{UserId: resp.GetUserId(), Err: resp.Error}, nil
+}
+
+func decodeGRPCLoginResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
+	resp := grpcResp.(*auth.LoginResponse)
+	return &endpoints.LoginResponse{Status: resp.GetStatus(), Token: resp.GetToken()}, nil
+}
+
+func decodeGRPCGenerateResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
+	resp := grpcResp.(*auth.GenerateResponse)
+	return &endpoints.GenerateResponse{Base32: string(resp.Base32), OtpAuthUrl: resp.OtpUrl}, nil
+}
+
+func decodeGRPCVerifyResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
+	resp := grpcResp.(*auth.VerifyResponse)
+	user := &internal.User{
+		ID:         resp.User.Id,
+		Name:       resp.User.Name,
+		Email:      resp.User.Email,
+		OtpEnabled: resp.User.OtpEnabled,
+	}
+	return &endpoints.VerifyTwoFactorResponse{OtpVerified: resp.OtpVerified, User: user}, nil
+}
+
+func decodeGRPCVerifyJwtResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
+	resp := grpcResp.(*auth.VerifyJwtResponse)
+	user := &internal.User{
+		ID:         resp.User.Id,
+		Name:       resp.User.Name,
+		Email:      resp.User.Email,
+		OtpEnabled: resp.User.OtpEnabled,
+	}
+	return &endpoints.VerifyJwtResponse{Verified: resp.Verified, User: user}, nil
+}
+
+func decodeGRPCServiceStatusResponse(_ context.Context, grpcResp interface{}) (interface{}, error) {
+	resp := grpcResp.(*auth.ServiceStatusResponse)
+	return &endpoints.ServiceStatusResponse{Code: int(resp.GetCode()), Err: resp.Err}, nil
+}
+
+func encodeGRPCRegisterRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*endpoints.RegisterRequest)
+	return &auth.RegisterRequest{Email: req.Email, Name: req.Name, Password: req.Password}, nil
+}
+
+func encodeGRPCLoginRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*endpoints.LoginRequest)
+	return &auth.LoginRequest{Email: req.Email, Password: req.Password}, nil
+}
+
+func encodeGRPCGenerateRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	return &auth.GenerateRequest{}, nil
+}
+
+func encodeGRPCVerifyRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*endpoints.VerifyTwoFactorRequest)
+	return &auth.VerifyRequest{Token: req.Token}, nil
+}
+
+func encodeGRPCVerifyJwtRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req := grpcReq.(*endpoints.VerifyJwtRequest)
+	return &auth.VerifyJwtRequest{Token: req.Token}, nil
+}
+
+func encodeGRPCServiceStatusRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	return &auth.ServiceStatusRequest{}, nil
 }
 
 func encodeGRPCLoginResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
@@ -149,11 +140,6 @@ func encodeGRPCVerifyJwtResponse(_ context.Context, grpcResponse interface{}) (i
 		OtpEnabled: response.User.OtpEnabled,
 	}
 	return &auth.VerifyJwtResponse{Verified: response.Verified, User: &user}, nil
-}
-
-func encodeGRPCValidateResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
-	response := grpcResponse.(endpoints.ValidateResponse)
-	return &auth.ValidateResponse{OtpValid: response.OtpValid}, nil
 }
 
 func encodeGRPCServiceStatusResponse(_ context.Context, grpcResponse interface{}) (interface{}, error) {
