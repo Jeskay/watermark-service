@@ -1,0 +1,116 @@
+version: '3.9'
+services:
+  jaeger:
+    container_name: jaeger
+    image: jaegertracing/all-in-one
+    restart: always
+    ports:
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 16686:16686
+      - 14268:14268
+    networks:
+      - tracing_net
+  auth_db:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=YOUR_USER
+      - POSTGRES_PASSWORD=YOUR_PASSWORD
+      - POSTGRES_DB=YOUR_DATABASE
+    ports:
+      - 5432:5432
+    command: -p 5432
+    networks:
+      - auth_net
+  auth_service:
+    depends_on:
+      - auth_db
+    build: 
+      context: .
+      dockerfile: ./build/authentication/Dockerfile
+    environment:
+      - HTTP_PORT=9021
+      - HTTP_HOST=0.0.0.0
+      - GRPC_PORT=9022
+      - GRPC_HOST=0.0.0.0
+      - DB_HOST=auth_db
+      - DB_PORT=5432
+      - DB_USER=YOUR_USER
+      - DB_PASSWORD=YOUR_PASSWORD
+      - DB_DATABASE=YOUR_DATABASE
+      - SECRET_KEY=SECRET_SEQUENCE
+    ports:
+     - 9021:9021
+     - 9022:9022
+    networks:
+      - grpc_net
+      - auth_net
+  picture_service:
+    build: 
+      context: .
+      dockerfile: ./build/picture/Dockerfile
+    environment:
+      - HTTP_PORT=8081
+      - HTTP_HOST=0.0.0.0
+      - GRPC_PORT=8082
+      - GRPC_HOST=0.0.0.0
+      - JAEGER_PORT=6831
+      - JAEGER_HOST=jaeger
+    ports:
+      - 8081:8081
+      - 8082:8082
+    networks:
+      - grpc_net
+      - tracing_net
+  watermark_db:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=YOUR_USER
+      - POSTGRES_PASSWORD=YOUR_PASSWORD
+      - POSTGRES_DB=YOUR_DATABASE
+    ports:
+      - 5000:5000
+    command: -p 5000
+    networks:
+      - watermark_net
+  watermark_service:
+    depends_on:
+    - watermark_db
+    build: 
+      context: .
+      dockerfile: ./build/watermark/Dockerfile
+    environment:
+      - HTTP_PORT=9091
+      - HTTP_HOST=0.0.0.0
+      - GRPC_PORT=9092
+      - GRPC_HOST=0.0.0.0
+      - DB_HOST=watermark_db
+      - DB_PORT=5000
+      - DB_USER=YOUR_USER
+      - DB_PASSWORD=YOUR_PASSWORD
+      - DB_DATABASE=YOUR_USER
+      - CLOUDINARY_CLOUD=YOUR_CLOUD
+      - CLOUDINARY_API=YOUR_CLOUD_API
+      - CLOUDINARY_SECRET=YOUR_CLOUD_SECRET
+      - AUTH_PORT=9022
+      - AUTH_HOST=auth_service
+      - PICTURE_PORT=8082
+      - PICTURE_HOST=picture_service
+      - JAEGER_PORT=6831
+      - JAEGER_HOST=jaeger
+    ports:
+    - 9091:9091
+    - 9092:9092
+    networks:
+      - grpc_net
+      - watermark_net
+      - tracing_net
+networks:
+  grpc_net:
+    driver: bridge
+  auth_net:
+    driver: bridge
+  watermark_net:
+    driver: bridge
+  tracing_net:
+    driver: bridge
