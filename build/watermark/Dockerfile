@@ -2,8 +2,6 @@ FROM golang:1.21-alpine3.19 as builder
 
 WORKDIR /app
 
-RUN apk --update add --no-cache ca-certificates openssl git tzdata && update-ca-certificates
-
 COPY . .
 
 RUN go mod tidy
@@ -12,9 +10,6 @@ RUN go mod vendor
 RUN CGO_ENABLED=0 GOOS=linux GO_ARCH=amd64 go build -o watermark_service ./cmd/watermark/watermark.go
 
 FROM scratch
-
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 COPY --from=builder /app/watermark_service ./
 COPY --from=builder /app/var ./var
